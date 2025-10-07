@@ -9,6 +9,7 @@
     "build": "tsc",
     "ba:generate": "npx @better-auth/cli generate --output src/database/auth-schema.ts",
     "db:generate": "npx drizzle-kit generate",
+    "db:migrate": "npx drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "docker:up": "docker compose up -d",
