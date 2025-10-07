@@ -1,3 +1,8 @@
+import * as dotenv from 'dotenv';
+const envFile = process.env.NODE_ENV === 'dev' ? '.env.dev' : '.env.local';
+dotenv.config({ path: envFile });
+console.log("Loaded env file:", envFile);
+
 import { drizzle, PostgresJsDatabase} from 'drizzle-orm/postgres-js'; 
 import postgres from 'postgres';
 

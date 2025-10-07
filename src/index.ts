@@ -1,4 +1,4 @@
-import { auth } from './lib/auth';
+import { auth } from './lib/auth.js';
 import { Env } from './lib/auth.type';
 import { authMiddleware } from './middleware/auth.middleware';
 import { authCorsMiddleware } from './middleware/cors-middleware';

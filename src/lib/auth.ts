@@ -6,6 +6,7 @@ import { username } from "better-auth/plugins"
 
 export const auth = betterAuth({
     appName: "E-commerce",
+    baseURL: process.env.BETTER_AUTH_URL,
     database: drizzleAdapter(db, {
         provider: "pg",
         usePlural:true,
