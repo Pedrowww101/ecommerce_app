@@ -16,7 +16,7 @@ export const auth = betterAuth({
         enabled: true,
         minPasswordLength: 8,
         maxPasswordLength: 50,
-        autoSignIn: false,
+        autoSignIn: true
     },
     advanced: {
         crossSubDomainCookies: {
