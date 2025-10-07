@@ -4,7 +4,6 @@ import { authMiddleware } from './middleware/auth.middleware';
 import { authCorsMiddleware } from './middleware/cors-middleware';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
-import { env } from 'hono/adapter'; 
 import { serve } from '@hono/node-server'
 
 const app = new Hono<Env>()
@@ -13,8 +12,10 @@ const app = new Hono<Env>()
 .use(logger())
 .use("/auth/*", async (c, next) => {
   console.log("CORS middleware start");  
-  const authUrl = env(c).BETTER_AUTH_URL; 
-  await authCorsMiddleware(authUrl)(c, next);
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map(o => o.trim());
+  await authCorsMiddleware(allowedOrigins)(c, next);
 })
 
 .on(["POST", "GET"], "/auth/*", async (c) => {
