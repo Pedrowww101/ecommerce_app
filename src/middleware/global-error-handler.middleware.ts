@@ -1,5 +1,5 @@
 import type { ErrorHandler } from "hono";
-import { AppError } from "@/common/errors/app-error.js";
+import { AppError } from "../common/errors/app-error.js";
 
 export const getGlobalErrorHandler: ErrorHandler = (err, c) => {
    // ✅ Known application errors

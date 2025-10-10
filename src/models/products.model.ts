@@ -1,4 +1,4 @@
-import { products } from "@/database/app-schema.js";
+import { products } from "../database/app-schema.js";
 import { type } from "arktype";
 import {
    createInsertSchema,

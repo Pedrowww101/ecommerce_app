@@ -1,11 +1,11 @@
-import { BadRequest } from "@/common/errors/BadRequestError.js";
-import { ApiResponse } from "@/common/responses/ApiResponse.js";
+import { BadRequest } from "../common/errors/BadRequestError.js";
+import { ApiResponse } from "../common/responses/ApiResponse.js";
 import {
    CreateProductDTO,
    InsertProductModel,
    SelectProductModel,
-} from "@/models/products.model.js";
-import { ProductRepository } from "@/repositories/product.repository.js";
+} from "../models/products.model.js";
+import { ProductRepository } from "../repositories/product.repository.js";
 
 export class ProductService {
    constructor(private productRepo: ProductRepository) {}

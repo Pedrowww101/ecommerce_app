@@ -16,9 +16,6 @@
       "incremental": true,
       "outDir": "./dist",
       "rootDir": "./src",
-      "paths": {
-         "@/*": ["./src/*"]
-      },
       "skipLibCheck": true
    },
    "include": ["src/**/*"],

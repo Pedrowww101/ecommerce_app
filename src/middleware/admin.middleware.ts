@@ -1,4 +1,4 @@
-import { factory } from "@/lib/factory.js";
+import { factory } from "../lib/factory.js";
 
 export const adminOnly = factory.createMiddleware(async (c, next) => {
    const user = c.get("user");

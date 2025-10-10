@@ -1,7 +1,7 @@
-import { products } from "@/database/app-schema.js";
-import { db, DrizzleClient } from "@/database/client.js";
-import { InsertProductModel } from "@/models/products.model.js";
-import { PaginationParams } from "@/common/utils/pagination.js";
+import { products } from "../database/app-schema.js";
+import { db, DrizzleClient } from "../database/client.js";
+import { InsertProductModel } from "../models/products.model.js";
+import { PaginationParams } from "../common/utils/pagination.js";
 import { eq, sql } from "drizzle-orm";
 
 export class ProductRepository {
