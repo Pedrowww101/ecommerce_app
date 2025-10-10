@@ -1,26 +1,26 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020"],
-    "module": "NodeNext",
-    "esModuleInterop": true,
-    "allowJs": true,
-    "resolveJsonModule": true,
-    "allowImportingTsExtensions": false,
-    "strict": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "isolatedModules": true,
-    "incremental": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "skipLibCheck": true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+   "compilerOptions": {
+      "target": "ES2020",
+      "lib": ["ES2020"],
+      "module": "NodeNext",
+      "esModuleInterop": true,
+      "allowJs": true,
+      "resolveJsonModule": true,
+      "allowImportingTsExtensions": false,
+      "strict": true,
+      "strictNullChecks": true,
+      "noImplicitAny": true,
+      "noUnusedLocals": true,
+      "noUnusedParameters": true,
+      "isolatedModules": true,
+      "incremental": true,
+      "outDir": "./dist",
+      "rootDir": "./src",
+      "paths": {
+         "@/*": ["./src/*"]
+      },
+      "skipLibCheck": true
+   },
+   "include": ["src/**/*"],
+   "exclude": ["node_modules", "dist"]
 }

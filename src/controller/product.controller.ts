@@ -1,16 +1,19 @@
-import { factory } from "@/lib/factory";
-import { validator } from "@/lib/validator";
-import { createProductDTO } from "@/models/products.model";
-import { ProductRepository } from "@/repositories/product.repository";
-import { ProductService } from "@/services/product.service";
+import { factory } from "@/lib/factory.js";
+import { validator } from "@/lib/validator.js";
+import { createProductDTO } from "@/models/products.model.js";
+import { ProductRepository } from "@/repositories/product.repository.js";
+import { ProductService } from "@/services/product.service.js";
 
-export const addProductController = factory.createHandlers(validator("json", createProductDTO), async (c) => {
-    const body = c.req.valid("json")
+export const addProductController = factory.createHandlers(
+   validator("json", createProductDTO),
+   async (c) => {
+      const body = c.req.valid("json");
 
-    const productRepo = new ProductRepository(); 
-    const productService = new ProductService(productRepo);
+      const productRepo = new ProductRepository();
+      const productService = new ProductService(productRepo);
 
-    const result = await productService.createProduct(body)
+      const result = await productService.createProduct(body);
 
-    return c.json(result, 201)
-})
+      return c.json(result, 201);
+   }
+);
