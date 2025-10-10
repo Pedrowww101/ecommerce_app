@@ -13,3 +13,4 @@ export const authMiddleware = factory.createMiddleware(async (c, next) => {
     }
     await next();
 });
+

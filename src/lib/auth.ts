@@ -2,7 +2,8 @@ import {  db } from "../database/client.js";
 import { betterAuth } from "better-auth";
 import * as authSchema from "../database/auth-schema.js"
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { username } from "better-auth/plugins"
+import { username as usernamePlugin, admin as adminPlugin } from "better-auth/plugins"
+import { ac, adminRole, userRole } from "./access-control.js";
 
 export const auth = betterAuth({
     appName: "E-commerce",
@@ -22,9 +23,15 @@ export const auth = betterAuth({
         crossSubDomainCookies: {
             enabled: true,
         }
-    },
+    },  
     session: {
         
     },
-    plugins: [username()]
+    plugins: [usernamePlugin(), adminPlugin({
+        ac,
+        roles: {
+            userRole,
+            adminRole
+        } 
+    })]
 })
