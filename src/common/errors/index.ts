@@ -1,8 +1,8 @@
 export { AppError } from "./app-error";
-export { BadRequestError } from "./BadRequestError";
-export { NotFoundError } from "./NotFoundError";
-export { UnauthorizedError } from "./UnauthorizedError";
-export { ForbiddenError } from "./ForbiddenError";
+export { BadRequest } from "./BadRequestError";
+export { NotFound } from "./NotFoundError";
+export { Unauthorized } from "./UnauthorizedError";
+export { Forbidden } from "./ForbiddenError";
 export { ConflictError } from "./ConflictError";
 export { ValidationError } from "./ValidationError";
 export { InternalServerError } from "./InternalServerError";
