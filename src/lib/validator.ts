@@ -135,6 +135,5 @@ export const validator = <
       // throw new BadRequest(formattedErrors[0]?.message || "Validation failed.");
     }
 
-    // --- Success Case (remains unchanged) ---
     return result;
   });
