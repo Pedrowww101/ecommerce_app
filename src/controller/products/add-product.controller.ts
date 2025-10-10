@@ -1,8 +1,8 @@
-import { factory } from "../lib/factory.js";
-import { validator } from "../lib/validator.js";
-import { createProductDTO } from "../models/products.model.js";
-import { ProductRepository } from "../repositories/product.repository.js";
-import { ProductService } from "../services/product.service.js";
+import { factory } from "../../lib/factory.js";
+import { validator } from "../../lib/validator.js";
+import { createProductDTO } from "../../models/products.model.js";
+import { ProductRepository } from "../../repositories/products/product.repository.js";
+import { ProductService } from "../../services/product.service.js";
 
 export const addProductController = factory.createHandlers(
    validator("json", createProductDTO),

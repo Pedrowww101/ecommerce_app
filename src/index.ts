@@ -5,8 +5,9 @@ import { authCorsMiddleware } from "./middleware/cors-middleware.js";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { serve } from "@hono/node-server";
-import { addProductController } from "./controller/product.controller.js";
+import { addProductController } from "./controller/products/add-product.controller.js";
 import { getGlobalErrorHandler } from "./middleware/global-error-handler.middleware.js";
+import { getAllProductsController } from "./controller/products/get-all-products.controller.js";
 
 const app = new Hono<Env>()
    .basePath("/api")
@@ -27,7 +28,8 @@ const app = new Hono<Env>()
       return await auth.handler(c.req.raw);
    })
 
-   .use("/products/add", ...addProductController);
+   .use("/products/add", ...addProductController)
+   .use("/products", ...getAllProductsController);
 
 // .use("*", authMiddleware)
 
