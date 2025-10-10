@@ -108,7 +108,7 @@ export const validator = <
           type: error.code,
           actual: error.actual,
           expected: error.expected,
-          // value: sanitizedErrorData, // Uncomment if needed
+          value: sanitizedErrorData, // Uncomment if needed
         };
       });
 
