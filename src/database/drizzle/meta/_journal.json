@@ -8,6 +8,13 @@
       "when": 1759837359556,
       "tag": "0000_slimy_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1760101247283,
+      "tag": "0001_acoustic_dark_beast",
+      "breakpoints": true
     }
   ]
 }
