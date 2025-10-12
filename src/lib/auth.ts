@@ -17,17 +17,6 @@ export const auth = betterAuth({
       usePlural: true,
       schema: authSchema,
    }),
-   socialProviders: {
-      facebook: {
-         clientId: process.env.FACEBOOK_CLIENT_ID as string,
-         clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
-         scope: ["email", "public_profile"],
-      },
-      google: {
-         clientId: process.env.GOOGLE_CLIENT_ID as string,
-         clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      },
-   },
    emailAndPassword: {
       enabled: true,
       minPasswordLength: 8,
