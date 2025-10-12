@@ -17,25 +17,21 @@ export class ProductService {
    constructor(private productRepo: ProductRepository) {}
 
    async createProduct(
+      userId: string,
       dto: CreateProductDTO
    ): Promise<ApiResponse<SelectProductModel>> {
       const { name, price, stock, description, imageUrl } = dto;
 
-      // 1. Initialize the collection for 400 Bad Request errors
       const badRequestErrors: Record<string, string> = {};
 
-      // --- 400 Check 1: Name is required (collect error, DON'T throw yet) ---
       if (!name || name.trim().length === 0) {
          badRequestErrors.name = "Name is required.";
       }
 
-      // --- 400 Check 2: Price must be positive (example of a second check) ---
-      // Assuming price validation also happens here if not covered by Arktype
       if (price !== undefined && price <= 0) {
          badRequestErrors.price = "Price must be greater than zero.";
       }
 
-      // 2. THROW POINT A: Throw a single BadRequest if ANY 400 errors exist
       if (Object.keys(badRequestErrors).length > 0) {
          throw new BadRequest(
             "Validation failed for one or more fields.",
@@ -43,14 +39,9 @@ export class ProductService {
          );
       }
 
-      // ----------------------------------------------------
-      // 3. 409 Conflict Check (Only runs if 400 errors passed)
-      // ----------------------------------------------------
       const existingProduct = await this.productRepo.getProductByName(name);
 
       if (existingProduct) {
-         // THROW POINT B: Throw a 409 Conflict error
-         // We still use the structured error object to highlight the 'name' field
          throw new ConflictError(`Product name '${name}' already exists.`, {
             name: `The product name '${name}' is already in use.`,
          });
@@ -63,6 +54,7 @@ export class ProductService {
          stock,
          description,
          imageUrl,
+         createdBy: userId,
       };
 
       const product = await this.productRepo.add(productData);
