@@ -22,7 +22,9 @@ export const products = pgTable("products", {
    }).notNull(),
    stock: integer("stock").default(0).notNull(),
    imageUrl: text("image_url"),
-   createdBy: text("created_by"),
+   createdBy: text("created_by").references(() => users.id, {
+      onDelete: "set null",
+   }),
    createdAt: timestamp("created_at").defaultNow().notNull(),
    updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
