@@ -9,6 +9,9 @@ import {
 } from "better-auth/plugins";
 import { ac, roles as rolesObj } from "./access-control.js";
 
+console.log("Loaded secret?", !!process.env.BETTER_AUTH_SECRET);
+console.log("Base URL:", process.env.BETTER_AUTH_URL);
+
 export const auth = betterAuth({
    appName: "E-commerce",
    baseURL: process.env.BETTER_AUTH_URL,
