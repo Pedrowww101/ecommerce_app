@@ -8,11 +8,12 @@ export const addProductController = factory.createHandlers(
    validator("json", createProductDTO),
    async (c) => {
       const body = c.req.valid("json");
+      const user = c.get("user");
 
       const productRepo = new ProductRepository();
       const productService = new ProductService(productRepo);
 
-      const result = await productService.createProduct(body);
+      const result = await productService.createProduct(user!.id, body);
 
       return c.json(result, 201);
    }

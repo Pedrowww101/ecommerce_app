@@ -17,11 +17,11 @@ export const insertProductSchema = createInsertSchema(products, {
 });
 
 export const updateProductSchema = createUpdateSchema(products, {
-   name: type("string.trim.preformatted"),
-   description: type("string | null"),
-   price: type("number > 0"),
-   stock: type("number >= 0"),
-   imageUrl: type("string.url | null"),
+   name: type("string > 0 | undefined"),
+   description: type("string | null | undefined"),
+   price: type("number > 0 | undefined"),
+   stock: type("number >= 0 | undefined"),
+   imageUrl: type("string.url | null | undefined"),
 });
 
 export type SelectProductModel = typeof selectProductSchema.t;
@@ -35,6 +35,7 @@ export const selectProductDTO = selectProductSchema.omit(
 );
 export const createProductDTO = insertProductSchema.omit(
    "id",
+   "createdBy",
    "createdAt",
    "updatedAt"
 );

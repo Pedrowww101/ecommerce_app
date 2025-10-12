@@ -1,6 +1,9 @@
 import { products } from "../../database/app-schema.js";
 import { db, DrizzleClient } from "../../database/client.js";
-import { InsertProductModel } from "../../models/products.model.js";
+import {
+   InsertProductModel,
+   UpdateProductModel,
+} from "../../models/products.model.js";
 import { PaginationParams } from "../../common/utils/pagination.js";
 import { eq, sql } from "drizzle-orm";
 
@@ -20,6 +23,17 @@ export class ProductRepository {
          .returning();
 
       return addProduct;
+   }
+
+   async update(id: string, data: UpdateProductModel) {
+      const product = await this.dbClient
+         .update(products)
+         .set({
+            ...data,
+            price: data.price.toFixed(2),
+         })
+         .where(eq(products.id, id));
+      return product;
    }
 
    async getProductById(id: string) {
