@@ -12,6 +12,7 @@ import { ac, roles as rolesObj } from "./access-control.js";
 export const auth = betterAuth({
    appName: "E-commerce",
    baseURL: process.env.BETTER_AUTH_URL,
+   secret: process.env.BETTER_AUTH_SECRET,
    database: drizzleAdapter(db, {
       provider: "pg",
       usePlural: true,
