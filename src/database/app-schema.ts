@@ -25,6 +25,7 @@ export const products = pgTable("products", {
    createdBy: text("created_by").references(() => users.id, {
       onDelete: "set null",
    }),
+
    createdAt: timestamp("created_at").defaultNow().notNull(),
    updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

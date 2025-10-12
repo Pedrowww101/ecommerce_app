@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1759837359556,
-      "tag": "0000_slimy_doomsday",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1760101247283,
-      "tag": "0001_acoustic_dark_beast",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1760269561440,
-      "tag": "0002_loose_lilith",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1760270125265,
-      "tag": "0003_legal_cable",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1760272933105,
-      "tag": "0004_magical_marvel_apes",
+      "when": 1760273481710,
+      "tag": "0000_talented_proemial_gods",
       "breakpoints": true
     }
   ]
