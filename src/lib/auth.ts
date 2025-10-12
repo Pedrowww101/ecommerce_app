@@ -23,7 +23,12 @@ export const auth = betterAuth({
       maxPasswordLength: 50,
       autoSignIn: true,
    },
-   session: {},
+   advanced: {
+      crossSubDomainCookies: {
+         enabled: true,
+      },
+      useSecureCookies: true,
+   },
    plugins: [
       usernamePlugin(),
       adminPlugin({
