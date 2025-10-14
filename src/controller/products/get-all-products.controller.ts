@@ -12,7 +12,6 @@ const querySchema = type({
 export const getAllProductsController = factory.createHandlers(
    validator("query", querySchema),
    async (c) => {
-      
       const params = c.req.valid("query");
 
       const queryNumber = {

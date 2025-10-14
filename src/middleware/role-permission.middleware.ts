@@ -46,7 +46,7 @@ export const roleAndPermissionMiddleware = (
          await next();
       } else {
          const error = new Forbidden(
-            `Insufficient privileges to ${action} ${resource}`
+            `You are not allowed to ${action} ${resource}`
          );
          return c.json(error.toResponse(), 403);
       }

@@ -8,7 +8,7 @@ import {
    pgEnum,
    primaryKey,
 } from "drizzle-orm/pg-core";
-import { users } from "./auth-schema";
+import { users } from "./auth-schema.js";
 
 export const products = pgTable("products", {
    id: uuid("id").defaultRandom().primaryKey(),

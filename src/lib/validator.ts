@@ -8,7 +8,7 @@ import type {
    TypedResponse,
 } from "hono";
 import { validator as honoValidator } from "hono/validator";
-import { BadRequest } from "../common/errors/BadRequestError";
+import { BadRequest } from "../common/errors/BadRequestError.js";
 
 export type Hook<T, E extends Env, P extends string, O = {}> = (
    result:
