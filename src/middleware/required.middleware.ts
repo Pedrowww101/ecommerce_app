@@ -1,5 +1,5 @@
+import { Unauthorized } from "../common/errors/UnauthorizedError.js";
 import { factory } from "../lib/factory.js";
-import { Unauthorized } from "../common/errors";
 
 export const requiredAuthMiddleware = factory.createMiddleware(
    async (c, next) => {

@@ -1,5 +1,6 @@
 import { BadRequest } from "../common/errors/BadRequestError.js";
 import { ConflictError } from "../common/errors/ConflictError.js";
+import { NotFound } from "../common/errors/NotFoundError.js";
 import { ApiResponse } from "../common/responses/ApiResponse.js";
 import {
    PaginatedResult,
@@ -12,10 +13,12 @@ import {
    SelectProductModel,
 } from "../models/products.model.js";
 import { ProductRepository } from "../repositories/products/product.repository.js";
+import { notifyLowStock } from "../test/get-low-stock-products.api.js";
 
 export class ProductService {
    constructor(private productRepo: ProductRepository) {}
 
+   //  to insert/add product
    async createProduct(
       userId: string,
       dto: CreateProductDTO
@@ -112,6 +115,38 @@ export class ProductService {
       return {
          success: true,
          data: paginatedResult,
+         message: "Products retrieved successfully",
+      };
+   }
+
+   // DISCORD BOT SERVICES ONLY
+   async getLatestProducts(): Promise<ApiResponse<SelectProductModel[]>> {
+      const productList = await this.productRepo.getLatestProduct();
+
+      if (!Array.isArray(productList) || productList.length === 0) {
+         throw new NotFound("No products found");
+      }
+
+      return {
+         success: true,
+         data: productList,
+         message: "Products retrieved successfully",
+      };
+   }
+
+   // n8n low stock less than 50 triggers warning
+   async getProductWithLowStock(): Promise<ApiResponse<SelectProductModel[]>> {
+      const productList = await this.productRepo.getProductWithLowStocks();
+
+      if (!Array.isArray(productList) || productList.length === 0) {
+         throw new NotFound("No low stock products found");
+      }
+
+      await notifyLowStock(productList);
+
+      return {
+         success: true,
+         data: productList,
          message: "Products retrieved successfully",
       };
    }

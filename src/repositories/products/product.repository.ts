@@ -5,7 +5,7 @@ import {
    UpdateProductModel,
 } from "../../models/products.model.js";
 import { PaginationParams } from "../../common/utils/pagination.js";
-import { eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, lte, sql } from "drizzle-orm";
 
 export class ProductRepository {
    private dbClient: DrizzleClient;
@@ -71,5 +71,27 @@ export class ProductRepository {
          limit,
          total,
       };
+   }
+
+   // For discord bot, n8n testing etc..
+
+   // method for getting the latest products
+   async getLatestProduct() {
+      const latestProduct = await this.dbClient.query.products.findMany({
+         limit: 10,
+         orderBy: [desc(products.createdAt)],
+      });
+
+      return latestProduct;
+   }
+
+   // method for getting the product with a less than or equal 50
+   async getProductWithLowStocks() {
+      const productWithLowStock = await this.dbClient.query.products.findMany({
+         where: and(lte(products.stock, 50)),
+         orderBy: [asc(products.stock), asc(products.name)],
+      });
+
+      return productWithLowStock;
    }
 }
