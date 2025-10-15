@@ -1,3 +1,4 @@
+import axios from "axios";
 import { BadRequest } from "../common/errors/BadRequestError.js";
 import { ConflictError } from "../common/errors/ConflictError.js";
 import { NotFound } from "../common/errors/NotFoundError.js";
@@ -13,7 +14,6 @@ import {
    SelectProductModel,
 } from "../models/products.model.js";
 import { ProductRepository } from "../repositories/products/product.repository.js";
-import { notifyLowStock } from "../test/get-low-stock-products.api.js";
 
 export class ProductService {
    constructor(private productRepo: ProductRepository) {}
@@ -99,10 +99,10 @@ export class ProductService {
       const totalPages = Math.ceil(total / limit);
 
       const meta: PaginationMeta = {
-         page: page,
-         limit: limit,
+         page,
+         limit,
          totalItems: total,
-         totalPages: totalPages,
+         totalPages,
          hasNextPage: page < totalPages,
          hasPrevPage: page > 1,
       };
@@ -135,19 +135,42 @@ export class ProductService {
    }
 
    // n8n low stock less than 50 triggers warning
-   async getProductWithLowStock(): Promise<ApiResponse<SelectProductModel[]>> {
+   async getProductsWithLowStock(): Promise<ApiResponse<SelectProductModel[]>> {
       const productList = await this.productRepo.getProductWithLowStocks();
 
       if (!Array.isArray(productList) || productList.length === 0) {
          throw new NotFound("No low stock products found");
       }
 
-      await notifyLowStock(productList);
+      await this.sendLowStockNotification(productList);
 
       return {
          success: true,
          data: productList,
          message: "Products retrieved successfully",
       };
+   }
+
+   private async sendLowStockNotification(productList: SelectProductModel[]) {
+      if (!productList.length) return;
+
+      // 👇 add emoji based on severity
+      const formattedProducts = productList.map((p) => ({
+         ...p,
+         alertEmoji: p.stock < 10 ? "🔴" : "🟡",
+      }));
+
+      if (!process.env.N8N_WEBHOOK) {
+         console.error("❌ N8N webhook URL not set!");
+         return;
+      }
+      const res = await axios.post(process.env.N8N_WEBHOOK, {
+         message: "Low stock products detected",
+         data: formattedProducts,
+      });
+
+      console.log(
+         `✅ Low stock notification sent to n8n: ${res.status} ${res.statusText}`
+      );
    }
 }

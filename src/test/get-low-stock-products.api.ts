@@ -14,7 +14,11 @@ export async function notifyLowStock(products: SelectProductModel[]) {
    }));
 
    try {
-      const res = await axios.post(process.env.N8N_WEBHOOK!, {
+      if (!process.env.N8N_WEBHOOK) {
+         console.error("❌ N8N webhook URL not set!");
+         return;
+      }
+      const res = await axios.post(process.env.N8N_WEBHOOK, {
          message: "Low stock products detected",
          data: formattedProducts,
       });
