@@ -14,7 +14,7 @@ export async function notifyLowStock(products: SelectProductModel[]) {
    }));
 
    try {
-      const res = await axios.post(process.env.WEBHOOK_URL!, {
+      const res = await axios.post(process.env.N8N_WEBHOOK!, {
          message: "Low stock products detected",
          data: formattedProducts,
       });
