@@ -7,7 +7,7 @@ export const getAllLowStocksProductController = factory.createHandlers(
       const productRepo = new ProductRepository();
       const productService = new ProductService(productRepo);
 
-      const result = await productService.getProductWithLowStock();
+      const result = await productService.getProductsWithLowStock();
 
       return c.json(result, 200);
    }
