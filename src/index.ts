@@ -1,3 +1,6 @@
+import { loadEnv } from "./lib/load-env.js";
+loadEnv();
+
 import { auth } from "./lib/auth.js";
 import { Env } from "./lib/auth.type.js";
 import { authCorsMiddleware } from "./middleware/cors-middleware.js";

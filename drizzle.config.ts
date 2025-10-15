@@ -1,18 +1,9 @@
 // drizzle.config.ts (Corrected)
 import { defineConfig } from "drizzle-kit";
 
-import * as dotenv from "dotenv";
+import { loadEnv } from "./src/lib/load-env.js";
 
-// 1. Determine env file and load it
-const envFile = process.env.NODE_ENV === "dev" ? ".env.dev" : ".env.local";
-dotenv.config({ path: envFile });
-
-// 2. Log and check *after* loading
-console.log(">>> NODE_ENV:", process.env.NODE_ENV);
-console.log(
-   ">>> ENV from drizzle.config.ts:",
-   process.env.DATABASE_URL ? "SET" : "NOT SET"
-);
+loadEnv();
 
 if (!process.env.DATABASE_URL)
    throw Error("Database connection env not set up");
@@ -22,7 +13,6 @@ export default defineConfig({
    schema: ["./src/database/app-schema.ts", "./src/database/auth-schema.ts"],
    out: "./src/database/drizzle",
    dbCredentials: {
-      // 3. The URL is now correctly loaded here
       url: process.env.DATABASE_URL,
    },
    verbose: true,
