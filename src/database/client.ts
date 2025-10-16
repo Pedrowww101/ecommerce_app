@@ -8,6 +8,7 @@ import { drizzle, PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import * as appSchema from "../database/app-schema.js";
+import * as authSchema from "../database/auth-schema.js";
 
 console.log("DB URL CHECK:", process.env.DATABASE_URL ? "SET" : "NOT SET"); // <-- ADD THIS
 
@@ -19,7 +20,7 @@ function createDbClient() {
       max: 2,
    });
    return drizzle(client, {
-      schema: { ...appSchema },
+      schema: { ...appSchema, ...authSchema },
    });
 }
 

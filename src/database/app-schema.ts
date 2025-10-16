@@ -7,6 +7,7 @@ import {
    timestamp,
    pgEnum,
    primaryKey,
+   boolean,
 } from "drizzle-orm/pg-core";
 import { users } from "./auth-schema.js";
 
@@ -14,6 +15,7 @@ export const products = pgTable("products", {
    id: uuid("id").defaultRandom().primaryKey(),
 
    name: text("name").notNull(),
+   slug: text("slug").notNull().unique(),
    description: text("description"),
    price: numeric("price", {
       precision: 10,
@@ -25,6 +27,9 @@ export const products = pgTable("products", {
    createdBy: text("created_by").references(() => users.id, {
       onDelete: "set null",
    }),
+   updatedBy: text("updated_by").references(() => users.id, {
+      onDelete: "set null",
+   }),
 
    createdAt: timestamp("created_at").defaultNow().notNull(),
    updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -33,6 +38,7 @@ export const products = pgTable("products", {
 export const categories = pgTable("categories", {
    id: uuid("id").defaultRandom().primaryKey(),
    name: text("name").notNull().unique(),
+   slug: text("slug").notNull().unique(),
    description: text("description"),
 });
 
@@ -91,7 +97,12 @@ export const orders = pgTable("orders", {
    userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-
+   shippingAddressId: uuid("shipping_address_id")
+      .notNull()
+      .references(() => addresses.id, { onDelete: "cascade" }),
+   billingAddressId: uuid("billing_address_id")
+      .notNull()
+      .references(() => addresses.id, { onDelete: "cascade" }),
    status: orderStatusEnum("status").default("pending").notNull(),
    totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
 
@@ -109,4 +120,25 @@ export const orderItems = pgTable("order_items", {
       .references(() => products.id, { onDelete: "cascade" }),
    quantity: integer("quantity").notNull(),
    unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
+});
+
+export const addresses = pgTable("addresses", {
+   id: uuid("id").defaultRandom().primaryKey(),
+   userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+   // Address Details
+   line1: text("line_1").notNull(),
+   line2: text("line_2"),
+   city: text("city").notNull(),
+   state: text("state").notNull(),
+   zipCode: text("zip_code").notNull(),
+   country: text("country").notNull(),
+
+   // Optional: for user to mark a default
+   isDefault: boolean("is_default").default(false).notNull(),
+
+   createdAt: timestamp("created_at").defaultNow().notNull(),
+   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

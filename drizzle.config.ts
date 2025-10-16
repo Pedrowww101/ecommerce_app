@@ -16,7 +16,9 @@ if (!process.env.DATABASE_URL)
 
 export default defineConfig({
    dialect: "postgresql",
-   schema: ["./src/database/app-schema.ts", "./src/database/auth-schema.ts"],
+   // schema: ["./src/database/app-schema.ts", "./src/database/auth-schema.ts"],
+   schema: "./dist/database/**/*.js",
+   casing: "snake_case",
    out: "./src/database/drizzle",
    dbCredentials: {
       url: process.env.DATABASE_URL,
