@@ -27,6 +27,10 @@ export const auth = betterAuth({
       maxPasswordLength: 50,
       autoSignIn: true,
    },
+   session: {
+      expiresIn: 60 * 60 * 24 * 7,
+      updateAge: 60 * 60,
+   },
    advanced: {
       crossSubDomainCookies: {
          enabled: true,
@@ -39,6 +43,6 @@ export const auth = betterAuth({
          ac,
          roles: rolesObj,
       }),
-      bearerPlugin(),
+      bearerPlugin({}),
    ],
 });

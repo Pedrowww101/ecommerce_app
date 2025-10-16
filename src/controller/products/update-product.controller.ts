@@ -1,0 +1,25 @@
+import { type } from "arktype";
+import { factory } from "../../lib/factory.js";
+import { validator } from "../../lib/validator.js";
+import { updateProductDTO } from "../../models/products.model.js";
+import { ProductRepository } from "../../repositories/products/product.repository.js";
+import { ProductService } from "../../services/product.service.js";
+
+const paramSchema = type({
+   id: "string",
+});
+
+export const updateProductController = factory.createHandlers(
+   validator("param", paramSchema),
+   validator("json", updateProductDTO),
+   async (c) => {
+      const { id } = c.req.valid("param");
+
+      const body = c.req.valid("json");
+      const productRepo = new ProductRepository();
+      const productService = new ProductService(productRepo);
+
+      const result = await productService.updateProduct(id, body);
+      return c.json(result, 200);
+   }
+);

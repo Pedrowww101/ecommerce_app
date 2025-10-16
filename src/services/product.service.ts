@@ -12,8 +12,11 @@ import {
    CreateProductDTO,
    InsertProductModel,
    SelectProductModel,
+   UpdateProductDTO,
+   UpdateProductModel,
 } from "../models/products.model.js";
 import { ProductRepository } from "../repositories/products/product.repository.js";
+import { slugify } from "../utils/slugify.js";
 
 export class ProductService {
    constructor(private productRepo: ProductRepository) {}
@@ -23,9 +26,13 @@ export class ProductService {
       userId: string,
       dto: CreateProductDTO
    ): Promise<ApiResponse<SelectProductModel>> {
-      const { name, price, stock, description, imageUrl } = dto;
+      const { name, slug, price, stock, description, imageUrl } = dto;
 
       const badRequestErrors: Record<string, string> = {};
+
+      if (!userId || typeof userId !== "string" || !userId.trim()) {
+         throw new BadRequest("Product ID is required.");
+      }
 
       if (!name || name.trim().length === 0) {
          badRequestErrors.name = "Name is required.";
@@ -50,9 +57,13 @@ export class ProductService {
          });
       }
 
+      const finalSlug =
+         slug && slug.trim() !== "" ? slugify(slug) : slugify(name);
+
       // 4. If all validation passes, proceed with creation
       const productData: InsertProductModel = {
          name,
+         slug: finalSlug,
          price,
          stock,
          description,
@@ -116,6 +127,78 @@ export class ProductService {
          success: true,
          data: paginatedResult,
          message: "Products retrieved successfully",
+      };
+   }
+
+   async updateProduct(
+      productId: string,
+      dto: UpdateProductDTO
+   ): Promise<ApiResponse<SelectProductModel>> {
+      const { name, slug, price, stock, description, imageUrl } = dto;
+      const badRequestErrors: Record<string, string> = {};
+
+      if (!productId || typeof productId !== "string" || !productId.trim()) {
+         throw new BadRequest("Product ID is required.");
+      }
+      if (name !== undefined && name.trim().length === 0) {
+         badRequestErrors.name = "Name cannot be empty.";
+      }
+      if (price !== undefined && Number(price) <= 0) {
+         badRequestErrors.price = "Price must be greater than zero.";
+      }
+
+      if (Object.keys(badRequestErrors).length > 0) {
+         throw new BadRequest(
+            "Validation failed for one or more fields.",
+            badRequestErrors
+         );
+      }
+
+      const existingProduct = await this.productRepo.getProductById(productId);
+      if (!existingProduct) {
+         throw new NotFound("Product not found");
+      }
+
+      const nameToSlugify = name !== undefined ? name : existingProduct.name;
+
+      const finalSlug =
+         slug && slug.trim() !== "" ? slugify(slug) : slugify(nameToSlugify);
+
+      const existingProductBySlug = await this.productRepo.getProductBySlug(
+         finalSlug
+      );
+
+      if (existingProductBySlug && existingProductBySlug.id !== productId) {
+         throw new ConflictError(
+            `Product slug '${finalSlug}' already exists.`,
+            { slug: `The product slug '${finalSlug}' is already in use.` }
+         );
+      }
+      const updatePayload: Partial<UpdateProductModel> = { slug: finalSlug };
+
+      if (name !== undefined) updatePayload.name = name;
+      if (price !== undefined) {
+         const parsedPrice = Number(price);
+         updatePayload.price = Math.round(parsedPrice * 100) / 100;
+      }
+      if (stock !== undefined) updatePayload.stock = Number(stock);
+      if (description !== undefined) updatePayload.description = description;
+      if (imageUrl !== undefined) updatePayload.imageUrl = imageUrl;
+
+      const updatedProduct = await this.productRepo.update(
+         productId,
+         updatePayload as UpdateProductModel
+      );
+
+      if (!updatedProduct) {
+         // This indicates a repository issue or concurrency problem, not a Not Found error.
+         throw new BadRequest("Failed to retrieve updated product data.");
+      }
+
+      return {
+         success: true,
+         data: updatedProduct,
+         message: "Product updated successfully",
       };
    }
 

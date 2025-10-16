@@ -10,6 +10,7 @@ import {
 export const selectProductSchema = createSelectSchema(products);
 export const insertProductSchema = createInsertSchema(products, {
    name: type("string > 0"),
+   slug: type("string | undefined"),
    description: type("string | null"),
    price: type("number > 0"),
    stock: type("number >= 0"),
@@ -18,6 +19,7 @@ export const insertProductSchema = createInsertSchema(products, {
 
 export const updateProductSchema = createUpdateSchema(products, {
    name: type("string > 0 | undefined"),
+   slug: type("string > 0 | undefined"),
    description: type("string | null | undefined"),
    price: type("number > 0 | undefined"),
    stock: type("number >= 0 | undefined"),
@@ -36,10 +38,13 @@ export const selectProductDTO = selectProductSchema.omit(
 export const createProductDTO = insertProductSchema.omit(
    "id",
    "createdBy",
+   "updatedBy",
    "createdAt",
    "updatedAt"
 );
-export const updateProductDTO = updateProductSchema.partial();
+export const updateProductDTO = updateProductSchema
+   .partial()
+   .omit("createdAt", "updatedAt", "createdBy");
 
 export type CreateProductDTO = typeof createProductDTO.infer;
 export type UpdateProductDTO = typeof updateProductDTO.infer;

@@ -26,13 +26,14 @@ export class ProductRepository {
    }
 
    async update(id: string, data: UpdateProductModel) {
-      const product = await this.dbClient
+      const [product] = await this.dbClient
          .update(products)
          .set({
             ...data,
             price: data.price.toFixed(2),
          })
-         .where(eq(products.id, id));
+         .where(eq(products.id, id))
+         .returning();
       return product;
    }
 
@@ -48,6 +49,13 @@ export class ProductRepository {
          where: eq(products.name, name),
       });
 
+      return product;
+   }
+
+   async getProductBySlug(slug: string) {
+      const product = await this.dbClient.query.products.findFirst({
+         where: eq(products.slug, slug),
+      });
       return product;
    }
 
