@@ -1,4 +1,3 @@
-CREATE TYPE "public"."order_status" AS ENUM('pending', 'paid', 'shipped', 'completed', 'cancelled');--> statement-breakpoint
 CREATE TABLE "addresses" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text NOT NULL,
@@ -29,8 +28,8 @@ CREATE TABLE "carts" (
 CREATE TABLE "categories" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
-	"slug" text NOT NULL,
 	"description" text,
+	"slug" text NOT NULL,
 	CONSTRAINT "categories_name_unique" UNIQUE("name"),
 	CONSTRAINT "categories_slug_unique" UNIQUE("slug")
 );
@@ -46,12 +45,12 @@ CREATE TABLE "order_items" (
 CREATE TABLE "orders" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text NOT NULL,
-	"shipping_address_id" uuid NOT NULL,
-	"billing_address_id" uuid NOT NULL,
 	"status" "order_status" DEFAULT 'pending' NOT NULL,
 	"total_amount" numeric(10, 2) NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"shipping_address_id" uuid NOT NULL,
+	"billing_address_id" uuid NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "product_categories" (
@@ -63,15 +62,15 @@ CREATE TABLE "product_categories" (
 CREATE TABLE "products" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
-	"slug" text NOT NULL,
 	"description" text,
 	"price" numeric(10, 2) NOT NULL,
 	"stock" integer DEFAULT 0 NOT NULL,
 	"image_url" text,
-	"created_by" text,
-	"updated_by" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_by" text,
+	"updated_by" text,
+	"slug" text NOT NULL,
 	CONSTRAINT "products_slug_unique" UNIQUE("slug")
 );
 --> statement-breakpoint
