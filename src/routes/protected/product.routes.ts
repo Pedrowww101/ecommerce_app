@@ -12,7 +12,7 @@ const protectedProductRoutes = new Hono<Env>()
    )
    .get(
       "/low-stock",
-      roleAndPermissionMiddleware("product", "read"),
+      roleAndPermissionMiddleware("product", "view"),
       ...getAllLowStocksProductController
    );
 
