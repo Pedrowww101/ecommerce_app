@@ -11,22 +11,24 @@ import {
 import {
    CreateProductDTO,
    InsertProductModel,
+   ProductResponseDTO,
    SelectProductModel,
    UpdateProductDTO,
    UpdateProductModel,
-} from "../models/products.model.js";
-import { ProductRepository } from "../repositories/products/product.repository.js";
+} from "../database/models/products.model.js";
+import { ProductsRepository } from "../repositories/product.repository.js";
 import { slugify } from "../utils/slugify.js";
 
 export class ProductService {
-   constructor(private productRepo: ProductRepository) {}
+   constructor(private productRepo: ProductsRepository) {}
 
    //  to insert/add product
    async createProduct(
       userId: string,
       dto: CreateProductDTO
-   ): Promise<ApiResponse<SelectProductModel>> {
-      const { name, slug, price, stock, description, imageUrl } = dto;
+   ): Promise<ApiResponse<ProductResponseDTO>> {
+      const { name, slug, price, stock, description, imageUrl, categoryIds } =
+         dto;
 
       const badRequestErrors: Record<string, string> = {};
 
@@ -68,27 +70,30 @@ export class ProductService {
          stock,
          description,
          imageUrl,
+         categoryIds,
          createdBy: userId,
       };
 
       const product = await this.productRepo.add(productData);
 
+      const responseData: ProductResponseDTO = {
+         ...product,
+         price: Number(product.price),
+      };
+
       return {
          success: true,
-         data: product,
+         data: responseData,
          message: "Product created successfully",
       };
    }
 
    async getAllProducts(
       params: PaginationParams
-   ): Promise<ApiResponse<PaginatedResult<SelectProductModel>>> {
-      // 👆 This is the key: ApiResponse now wraps the PaginatedResult<T>
-
+   ): Promise<ApiResponse<PaginatedResult<ProductResponseDTO>>> {
       const { page, limit } = params;
       const badRequestErrors: Record<string, string> = {};
 
-      // 1. Validation (Same as before)
       if (!Number.isInteger(page) || page < 1) {
          badRequestErrors.page = "Page number must be a positive integer.";
       }
@@ -118,9 +123,14 @@ export class ProductService {
          hasPrevPage: page > 1,
       };
 
-      const paginatedResult: PaginatedResult<SelectProductModel> = {
-         data: allProducts,
-         meta: meta,
+      const mappedProducts: ProductResponseDTO[] = allProducts.map((p) => ({
+         ...p,
+         price: Number(p.price),
+      }));
+
+      const paginatedResult: PaginatedResult<ProductResponseDTO> = {
+         data: mappedProducts,
+         meta,
       };
 
       return {
@@ -133,7 +143,7 @@ export class ProductService {
    async updateProduct(
       productId: string,
       dto: UpdateProductDTO
-   ): Promise<ApiResponse<SelectProductModel>> {
+   ): Promise<ApiResponse<ProductResponseDTO>> {
       const { name, slug, price, stock, description, imageUrl } = dto;
       const badRequestErrors: Record<string, string> = {};
 
@@ -191,13 +201,17 @@ export class ProductService {
       );
 
       if (!updatedProduct) {
-         // This indicates a repository issue or concurrency problem, not a Not Found error.
          throw new BadRequest("Failed to retrieve updated product data.");
       }
 
+      const response: ProductResponseDTO = {
+         ...updatedProduct,
+         price: Number(updatedProduct.price),
+      };
+
       return {
          success: true,
-         data: updatedProduct,
+         data: response,
          message: "Product updated successfully",
       };
    }
@@ -218,18 +232,30 @@ export class ProductService {
    }
 
    // n8n low stock less than 50 triggers warning
-   async getProductsWithLowStock(): Promise<ApiResponse<SelectProductModel[]>> {
-      const productList = await this.productRepo.getProductWithLowStocks();
+   async getProductsWithLowStock(): Promise<ApiResponse<ProductResponseDTO[]>> {
+      const productListWithLowStocks =
+         await this.productRepo.getProductWithLowStocks();
 
-      if (!Array.isArray(productList) || productList.length === 0) {
+      if (
+         !Array.isArray(productListWithLowStocks) ||
+         productListWithLowStocks.length === 0
+      ) {
          throw new NotFound("No low stock products found");
       }
 
-      await this.sendLowStockNotification(productList);
+      this.sendLowStockNotification(productListWithLowStocks).catch((err) => {
+         console.error("⚠️ Failed to send low stock notification:", err);
+      });
+
+      const mappedProductList: ProductResponseDTO[] =
+         productListWithLowStocks.map((p) => ({
+            ...p,
+            price: Number(p.price),
+         }));
 
       return {
          success: true,
-         data: productList,
+         data: mappedProductList,
          message: "Products retrieved successfully",
       };
    }

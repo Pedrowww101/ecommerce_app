@@ -1,7 +1,7 @@
 import { factory } from "../../lib/factory.js";
 import { validator } from "../../lib/validator.js";
-import { createProductDTO } from "../../models/products.model.js";
-import { ProductRepository } from "../../repositories/products/product.repository.js";
+import { createProductDTO } from "../../database/models/products.model.js";
+import { ProductsRepository } from "../../repositories/product.repository.js";
 import { ProductService } from "../../services/product.service.js";
 
 export const addProductController = factory.createHandlers(
@@ -10,7 +10,7 @@ export const addProductController = factory.createHandlers(
       const body = c.req.valid("json");
       const user = c.get("user");
 
-      const productRepo = new ProductRepository();
+      const productRepo = new ProductsRepository();
       const productService = new ProductService(productRepo);
 
       const result = await productService.createProduct(user!.id, body);

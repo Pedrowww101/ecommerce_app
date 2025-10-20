@@ -3,7 +3,7 @@ import {
    createUpdateSchema,
    createSelectSchema,
 } from "drizzle-arktype";
-import { orders } from "../database/app-schema.js";
+import { orders } from "../app-schema.js";
 
 export const ordersSchema = createSelectSchema(orders);
 export const insertOrdersSchema = createInsertSchema(orders, {});

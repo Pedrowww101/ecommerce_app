@@ -1,4 +1,4 @@
-import { products } from "../database/app-schema.js";
+import { products } from "../app-schema.js";
 import { type } from "arktype";
 import {
    createInsertSchema,
@@ -17,6 +17,10 @@ export const insertProductSchema = createInsertSchema(products, {
    imageUrl: type("string.url | null"),
 });
 
+export const insertProductWithCategorySchema = insertProductSchema.and({
+   categoryIds: type("string[] | null | undefined"),
+});
+
 export const updateProductSchema = createUpdateSchema(products, {
    name: type("string > 0 | undefined"),
    slug: type("string > 0 | undefined"),
@@ -27,7 +31,7 @@ export const updateProductSchema = createUpdateSchema(products, {
 });
 
 export type SelectProductModel = typeof selectProductSchema.t;
-export type InsertProductModel = typeof insertProductSchema.t;
+export type InsertProductModel = typeof insertProductWithCategorySchema.t;
 export type UpdateProductModel = typeof updateProductSchema.t;
 
 // for service layer
@@ -35,7 +39,7 @@ export const selectProductDTO = selectProductSchema.omit(
    "createdAt",
    "updatedAt"
 );
-export const createProductDTO = insertProductSchema.omit(
+export const createProductDTO = insertProductWithCategorySchema.omit(
    "id",
    "createdBy",
    "updatedBy",

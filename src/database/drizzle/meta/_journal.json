@@ -8,6 +8,13 @@
       "when": 1760612680808,
       "tag": "0000_silent_iron_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1760945936518,
+      "tag": "0001_loud_radioactive_man",
+      "breakpoints": true
     }
   ]
 }

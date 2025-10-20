@@ -1,20 +1,20 @@
-import { products } from "../../database/app-schema.js";
-import { db, DrizzleClient } from "../../database/client.js";
+import { productCategories, products } from "../database/app-schema.js";
+import { db, DrizzleClient } from "../database/client.js";
 import {
    InsertProductModel,
    UpdateProductModel,
-} from "../../models/products.model.js";
-import { PaginationParams } from "../../common/utils/pagination.js";
+} from "../database/models/products.model.js";
+import { PaginationParams } from "../common/utils/pagination.js";
 import { and, asc, desc, eq, lte, sql } from "drizzle-orm";
 
-export class ProductRepository {
+export class ProductsRepository {
    private dbClient: DrizzleClient;
    constructor(database?: DrizzleClient) {
       this.dbClient = database || db;
    }
 
    async add(data: InsertProductModel) {
-      const [addProduct] = await this.dbClient
+      const [newProduct] = await db
          .insert(products)
          .values({
             ...data,
@@ -22,7 +22,16 @@ export class ProductRepository {
          })
          .returning();
 
-      return addProduct;
+      if (data.categoryIds?.length) {
+         await db.insert(productCategories).values(
+            data.categoryIds.map((catId) => ({
+               productId: newProduct.id,
+               categoryId: catId,
+            }))
+         );
+      }
+
+      return newProduct;
    }
 
    async update(id: string, data: UpdateProductModel) {

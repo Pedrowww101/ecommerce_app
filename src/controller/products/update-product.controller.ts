@@ -1,8 +1,8 @@
 import { type } from "arktype";
 import { factory } from "../../lib/factory.js";
 import { validator } from "../../lib/validator.js";
-import { updateProductDTO } from "../../models/products.model.js";
-import { ProductRepository } from "../../repositories/products/product.repository.js";
+import { updateProductDTO } from "../../database/models/products.model.js";
+import { ProductsRepository } from "../../repositories/product.repository.js";
 import { ProductService } from "../../services/product.service.js";
 
 const paramSchema = type({
@@ -16,7 +16,7 @@ export const updateProductController = factory.createHandlers(
       const { id } = c.req.valid("param");
 
       const body = c.req.valid("json");
-      const productRepo = new ProductRepository();
+      const productRepo = new ProductsRepository();
       const productService = new ProductService(productRepo);
 
       const result = await productService.updateProduct(id, body);
