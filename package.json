@@ -6,7 +6,7 @@
    "main": "index.js",
    "scripts": {
       "dev": "cross-env NODE_ENV=local tsx watch src/index.ts",
-      "start": "cross-env NODE_ENV=dev node dist/index.js",
+      "start": "pnpm exec drizzle-kit push && cross-env NODE_ENV=dev node dist/index.js",
       "build": "pnpm exec tsc",
       "ba:generate": "npx @better-auth/cli generate --output src/database/auth-schema.ts",
       "ba:migrate": "npx @better-auth/cli migrate",
