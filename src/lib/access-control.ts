@@ -1,12 +1,14 @@
 import { createAccessControl } from "better-auth/plugins/access";
 
+export const basePermission = ["create", "view", "update", "remove"] as const;
+export const orderPermission = [...basePermission, "updateStatus"] as const;
+
 export const permissions = {
-   product: ["create", "view", "update", "remove"],
-   category: ["create", "view", "update", "remove"],
-   order: ["read", "updateStatus"],
+   product: basePermission,
+   category: basePermission,
+   order: orderPermission,
 } as const;
 
-export type Permissions = typeof permissions;
 const ac = createAccessControl(permissions);
 
 export const roles = {

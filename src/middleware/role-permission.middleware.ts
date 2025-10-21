@@ -1,4 +1,4 @@
-import { roles, Permissions } from "../lib/access-control.js";
+import { roles, permissions } from "../lib/access-control.js";
 import { factory } from "../lib/factory.js";
 import { Unauthorized, Forbidden } from "../common/errors/index.js";
 
@@ -6,9 +6,13 @@ type RoleKeys = keyof typeof roles;
 
 type ResourceKeys = keyof Permissions;
 
+export type Permissions = typeof permissions;
+
+export type OrderActions = Permissions[keyof Permissions][number];
+
 export const roleAndPermissionMiddleware = (
    resource: ResourceKeys,
-   action: string
+   action: OrderActions
 ) => {
    return factory.createMiddleware(async (c, next) => {
       const user = c.get("user");
@@ -40,7 +44,7 @@ export const roleAndPermissionMiddleware = (
 
       const hasPermission =
          Array.isArray(resourcePermissions) &&
-         resourcePermissions.includes(action as any);
+         resourcePermissions.includes(action as OrderActions);
 
       if (hasPermission) {
          await next();

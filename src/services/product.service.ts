@@ -22,7 +22,6 @@ import { slugify } from "../utils/slugify.js";
 export class ProductService {
    constructor(private productRepo: ProductsRepository) {}
 
-   //  to insert/add product
    async createProduct(
       userId: string,
       dto: CreateProductDTO
