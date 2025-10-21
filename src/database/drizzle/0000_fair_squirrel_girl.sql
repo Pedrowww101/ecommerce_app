@@ -73,7 +73,7 @@ CREATE TABLE "products" (
 	"slug" text NOT NULL,
 	"updated_by" text,
 	CONSTRAINT "products_slug_unique" UNIQUE("slug")
-); 
+);
 --> statement-breakpoint
 CREATE TABLE "accounts" (
 	"id" text PRIMARY KEY NOT NULL,
