@@ -12,7 +12,7 @@
       "db:migrate": "pnpm exec drizzle-kit migrate",
       "db:studio": "pnpm exec drizzle-kit studio",
       "db:push": "pnpm exec drizzle-kit push",
-      "db:deploy": "pnpm build && pnpm db:push",
+      "db:deploy": "pnpm build && pnpm exec drizzle-kit push",
       "ba:generate": "npx @better-auth/cli generate --output src/database/auth-schema.ts",
       "ba:migrate": "npx @better-auth/cli migrate",
       "docker:up": "docker compose up -d",
