@@ -17,3 +17,19 @@ export interface PaginatedResult<T> {
    data: T[];
    meta: PaginationMeta;
 }
+
+export type SingleResult<T> = T;
+
+export interface PaginatedRepositoryResult<T> {
+   items: T[]; // Use a more general name like 'items' or 'data' instead of 'allCategories'
+   total: number;
+}
+
+export interface PaginationValidationResult {
+   isValid: boolean;
+   errors: Record<string, string>;
+   values: {
+      page: number;
+      limit: number;
+   };
+}
