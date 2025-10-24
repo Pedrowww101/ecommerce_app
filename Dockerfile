@@ -1,4 +1,4 @@
-# Use the official Node.js image as the base
+# Base image
 FROM node:22-alpine
 
 # Set working directory
@@ -7,23 +7,20 @@ WORKDIR /app
 # Install pnpm globally
 RUN npm install -g pnpm
 
-# Copy package files
-COPY package*.json ./
+# Copy package files AND lockfile
+COPY package*.json pnpm-lock.yaml ./
 
-# Install dependencies
-RUN pnpm install
+# Install only production dependencies
+RUN pnpm install --prod --frozen-lockfile
 
-# Copy application code
-COPY . .
-
-# Build the project (if using TypeScript)
-RUN pnpm build
+# Copy source code (assume TS is already compiled to dist/)
+COPY dist ./dist
 
 # Expose port
 EXPOSE 3000
 
-# Environment variable for Hono to listen on all interfaces
-ENV HOST 0.0.0.0
+# Environment variable for Hono
+ENV HOST=0.0.0.0
 
-# Run production server
+# Run the app
 CMD ["pnpm", "start"]
