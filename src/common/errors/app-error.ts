@@ -11,7 +11,7 @@ export type AppErrorStatusCode =
 
 export abstract class AppError extends Error {
    public readonly statusCode: AppErrorStatusCode;
-   public readonly details?: unknown;
+   public readonly details?: Record<string, unknown> | string;
    public readonly meta?: Record<string, unknown>;
    public readonly timestamp: string;
    public readonly errorCode: string;
@@ -19,7 +19,7 @@ export abstract class AppError extends Error {
    constructor(
       message: string,
       statusCode: AppErrorStatusCode,
-      details?: unknown,
+      details?: Record<string, unknown> | string,
       meta?: Record<string, unknown>
    ) {
       super(message);
