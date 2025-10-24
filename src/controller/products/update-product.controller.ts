@@ -2,7 +2,7 @@ import { type } from "arktype";
 import { factory } from "../../lib/factory.js";
 import { validator } from "../../lib/validator.js";
 import { updateProductDTO } from "../../database/models/products.model.js";
-import { ProductsRepository } from "../../repositories/product.repository.js";
+import { ProductsRepository } from "../../database/repositories/product.repository.js";
 import { ProductService } from "../../services/product.service.js";
 
 const paramSchema = type({

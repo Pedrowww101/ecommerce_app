@@ -1,5 +1,5 @@
 import { factory } from "../../lib/factory.js";
-import { ProductsRepository } from "../../repositories/product.repository.js";
+import { ProductsRepository } from "../../database/repositories/product.repository.js";
 import { ProductService } from "../../services/product.service.js";
 
 export const getLatestProductsController = factory.createHandlers(async (c) => {
