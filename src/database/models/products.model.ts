@@ -18,7 +18,7 @@ export const insertProductSchema = createInsertSchema(products, {
 });
 
 export const insertProductWithCategorySchema = insertProductSchema.and({
-   categoryIds: type("string[] | null | undefined"),
+   categoryIds: type("string[] | undefined"),
 });
 
 export const updateProductSchema = createUpdateSchema(products, {

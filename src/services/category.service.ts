@@ -2,16 +2,20 @@ import { BadRequest } from "../common/errors/BadRequestError.js";
 import { ConflictError } from "../common/errors/ConflictError.js";
 import { ApiResponse } from "../common/responses/ApiResponse.js";
 import {
+   PaginatedRepositoryResult,
    PaginatedResult,
    PaginationMeta,
    PaginationParams,
 } from "../common/utils/pagination.js";
+import { GLOBAL_TTL_CACHE } from "../config/constants.js";
 import {
    CategoriesResponseDTO,
    CreateCategoriesDTO,
 } from "../database/models/categories.model.js";
-import { CategoriesRepository } from "../repositories/category.repository.js";
+import { CategoriesRepository } from "../database/repositories/category.repository.js";
+import { cache } from "../utils/cache.js";
 import { slugify } from "../utils/slugify.js";
+import { validatePaginationParams } from "../utils/validators.js";
 
 export class CategoriesService {
    constructor(private categoryRepo: CategoriesRepository) {}
@@ -21,7 +25,7 @@ export class CategoriesService {
       dto: CreateCategoriesDTO
    ): Promise<ApiResponse<CategoriesResponseDTO>> {
       const { name, slug } = dto;
-      if (dto.name) throw new BadRequest("Category Name is required.");
+      if (!dto.name) throw new BadRequest("Category Name is required.");
 
       const existingCategoryName = await this.categoryRepo.getByName(name);
 
@@ -32,9 +36,11 @@ export class CategoriesService {
 
       const newCategory = await this.categoryRepo.add({
          ...dto,
-         slug: slug ? slug : slugify(slug),
+         slug: slug ? slug : slugify(name),
          createdBy: userId,
       });
+
+      await cache.delByPrefix("categories");
 
       return {
          success: true,
@@ -48,32 +54,35 @@ export class CategoriesService {
    ): Promise<ApiResponse<PaginatedResult<CategoriesResponseDTO>>> {
       const { page, limit } = params;
 
-      const badRequestErrors: Record<string, string> = {};
+      const { isValid, values, errors } = validatePaginationParams({
+         page,
+         limit,
+      });
 
-      if (!Number.isInteger(page) || page < 1) {
-         ("Page number must be a positive integer.");
+      if (!isValid) {
+         throw new BadRequest("Invalid pagination parameters", { errors });
       }
 
-      if (!Number.isInteger(limit) || limit < 1) {
-         badRequestErrors.limit = "Limit must be a positive integer.";
-      }
+      const cacheKey = `categories:page:${values.page}:limit:${values.limit}`;
 
-      if (Object.keys(badRequestErrors).length > 0) {
-         throw new BadRequest(
-            "Pagination parameters are invalid.",
-            badRequestErrors
-         );
-      }
+      const fetcher = async (): Promise<
+         PaginatedRepositoryResult<CategoriesResponseDTO>
+      > => {
+         const { allCategories, total } =
+            await this.categoryRepo.getAllCategories(values);
 
-      const { allProducts, total } = await this.categoryRepo.getAllCategories(
-         params
-      );
+         return { items: allCategories, total };
+      };
+
+      const { items: allCategories, total } = await cache.remember<
+         PaginatedRepositoryResult<CategoriesResponseDTO>
+      >(cacheKey, GLOBAL_TTL_CACHE, fetcher);
 
       const totalPages = Math.ceil(total / limit);
 
       const meta: PaginationMeta = {
-         page,
-         limit,
+         page: values.page,
+         limit: values.limit,
          totalItems: total,
          totalPages,
          hasNextPage: page < totalPages,
@@ -81,7 +90,7 @@ export class CategoriesService {
       };
 
       const paginatedResult: PaginatedResult<CategoriesResponseDTO> = {
-         data: allProducts,
+         data: allCategories,
          meta,
       };
 

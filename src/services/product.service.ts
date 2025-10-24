@@ -4,6 +4,7 @@ import { ConflictError } from "../common/errors/ConflictError.js";
 import { NotFound } from "../common/errors/NotFoundError.js";
 import { ApiResponse } from "../common/responses/ApiResponse.js";
 import {
+   PaginatedRepositoryResult,
    PaginatedResult,
    PaginationMeta,
    PaginationParams,
@@ -16,116 +17,70 @@ import {
    UpdateProductDTO,
    UpdateProductModel,
 } from "../database/models/products.model.js";
-import { ProductsRepository } from "../repositories/product.repository.js";
+import { ProductsRepository } from "../database/repositories/product.repository.js";
 import { slugify } from "../utils/slugify.js";
+import { CategoriesRepository } from "../database/repositories/category.repository.js";
+import { cache } from "../utils/cache.js";
+import { GLOBAL_TTL_CACHE } from "../config/constants.js";
+import { validatePaginationParams } from "../utils/validators.js";
 
 export class ProductService {
    constructor(private productRepo: ProductsRepository) {}
-
-   async createProduct(
-      userId: string,
-      dto: CreateProductDTO
-   ): Promise<ApiResponse<ProductResponseDTO>> {
-      const { name, slug, price, stock, description, imageUrl, categoryIds } =
-         dto;
-
-      const badRequestErrors: Record<string, string> = {};
-
-      if (!userId || typeof userId !== "string" || !userId.trim()) {
-         throw new BadRequest("Product ID is required.");
-      }
-
-      if (!name || name.trim().length === 0) {
-         badRequestErrors.name = "Name is required.";
-      }
-
-      if (price !== undefined && price <= 0) {
-         badRequestErrors.price = "Price must be greater than zero.";
-      }
-
-      if (Object.keys(badRequestErrors).length > 0) {
-         throw new BadRequest(
-            "Validation failed for one or more fields.",
-            badRequestErrors // Pass the structured errors
-         );
-      }
-
-      const existingProduct = await this.productRepo.getProductByName(name);
-
-      if (existingProduct) {
-         throw new ConflictError(`Product name '${name}' already exists.`, {
-            name: `The product name '${name}' is already in use.`,
-         });
-      }
-
-      const finalSlug =
-         slug && slug.trim() !== "" ? slugify(slug) : slugify(name);
-
-      // 4. If all validation passes, proceed with creation
-      const productData: InsertProductModel = {
-         name,
-         slug: finalSlug,
-         price,
-         stock,
-         description,
-         imageUrl,
-         categoryIds,
-         createdBy: userId,
-      };
-
-      const product = await this.productRepo.add(productData);
-
-      const responseData: ProductResponseDTO = {
-         ...product,
-         price: Number(product.price),
-      };
-
-      return {
-         success: true,
-         data: responseData,
-         message: "Product created successfully",
-      };
-   }
 
    async getAllProducts(
       params: PaginationParams
    ): Promise<ApiResponse<PaginatedResult<ProductResponseDTO>>> {
       const { page, limit } = params;
-      const badRequestErrors: Record<string, string> = {};
 
-      if (!Number.isInteger(page) || page < 1) {
-         badRequestErrors.page = "Page number must be a positive integer.";
-      }
-      if (!Number.isInteger(limit) || limit < 1) {
-         badRequestErrors.limit = "Limit must be a positive integer.";
+      const { isValid, values, errors } = validatePaginationParams({
+         page,
+         limit,
+      });
+
+      if (!isValid) {
+         throw new BadRequest("Invalid pagination parameters", { errors });
       }
 
-      if (Object.keys(badRequestErrors).length > 0) {
-         throw new BadRequest(
-            "Pagination parameters are invalid.",
-            badRequestErrors
+      const cacheKey = `products:page:${values.page}:limit:${values.limit}`;
+
+      const fetcher = async (): Promise<
+         PaginatedRepositoryResult<ProductResponseDTO>
+      > => {
+         const { allProducts, total } = await this.productRepo.getAllProducts(
+            values
          );
-      }
 
-      const { allProducts, total } = await this.productRepo.getAllProducts(
-         params
+         const items: ProductResponseDTO[] = allProducts.map((p) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            description: p.description,
+            price: Number(p.price),
+            stock: p.stock,
+            imageUrl: p.imageUrl,
+            createdBy: p.createdBy,
+            updatedBy: p.updatedBy,
+         }));
+
+         return { items, total };
+      };
+
+      const { items: mappedProducts, total } = await cache.remember(
+         cacheKey,
+         GLOBAL_TTL_CACHE,
+         fetcher
       );
 
       const totalPages = Math.ceil(total / limit);
 
       const meta: PaginationMeta = {
-         page,
-         limit,
+         page: values.page,
+         limit: values.limit,
          totalItems: total,
          totalPages,
          hasNextPage: page < totalPages,
          hasPrevPage: page > 1,
       };
-
-      const mappedProducts: ProductResponseDTO[] = allProducts.map((p) => ({
-         ...p,
-         price: Number(p.price),
-      }));
 
       const paginatedResult: PaginatedResult<ProductResponseDTO> = {
          data: mappedProducts,
@@ -215,47 +170,48 @@ export class ProductService {
       };
    }
 
-   // DISCORD BOT SERVICES ONLY
-   async getLatestProducts(): Promise<ApiResponse<SelectProductModel[]>> {
-      const productList = await this.productRepo.getLatestProduct();
-
-      if (!Array.isArray(productList) || productList.length === 0) {
-         throw new NotFound("No products found");
-      }
-
-      return {
-         success: true,
-         data: productList,
-         message: "Products retrieved successfully",
-      };
-   }
-
    // n8n low stock less than 50 triggers warning
    async getProductsWithLowStock(): Promise<ApiResponse<ProductResponseDTO[]>> {
-      const productListWithLowStocks =
-         await this.productRepo.getProductWithLowStocks();
+      const cacheKey = "products:low-stock";
 
-      if (
-         !Array.isArray(productListWithLowStocks) ||
-         productListWithLowStocks.length === 0
-      ) {
-         throw new NotFound("No low stock products found");
-      }
+      const fetcher = async (): Promise<ProductResponseDTO[]> => {
+         const result = await this.productRepo.getProductWithLowStocks();
 
-      this.sendLowStockNotification(productListWithLowStocks).catch((err) => {
+         if (!Array.isArray(result) || result.length === 0) {
+            throw new NotFound("No low stock products found.");
+         }
+
+         return result.map((p) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            description: p.description,
+            price: Number(p.price), // normalize type
+            stock: p.stock,
+            imageUrl: p.imageUrl,
+            createdBy: p.createdBy,
+            updatedBy: p.updatedBy,
+         }));
+      };
+
+      // Use cache layer
+      const lowStockProducts = await cache.remember<ProductResponseDTO[]>(
+         cacheKey,
+         GLOBAL_TTL_CACHE,
+         fetcher
+      );
+
+      // Send notifications asynchronously (don’t block response)
+      this.sendLowStockNotification(
+         lowStockProducts as unknown as SelectProductModel[]
+      ).catch((err) => {
          console.error("⚠️ Failed to send low stock notification:", err);
       });
 
-      const mappedProductList: ProductResponseDTO[] =
-         productListWithLowStocks.map((p) => ({
-            ...p,
-            price: Number(p.price),
-         }));
-
       return {
          success: true,
-         data: mappedProductList,
-         message: "Products retrieved successfully",
+         data: lowStockProducts,
+         message: "Low stock products retrieved successfully.",
       };
    }
 
@@ -280,5 +236,82 @@ export class ProductService {
       console.log(
          `✅ Low stock notification sent to n8n: ${res.status} ${res.statusText}`
       );
+   }
+}
+
+export class ProductCategoryService {
+   constructor(
+      private productRepo: ProductsRepository,
+      private categoryRepo: CategoriesRepository
+   ) {}
+   async createProduct(
+      userId: string,
+      dto: CreateProductDTO
+   ): Promise<ApiResponse<ProductResponseDTO>> {
+      const { name, slug, price, stock, description, imageUrl, categoryIds } =
+         dto;
+
+      const badRequestErrors: Record<string, string> = {};
+
+      if (!userId || typeof userId !== "string" || !userId.trim()) {
+         throw new BadRequest("Product ID is required.");
+      }
+
+      if (!name || name.trim().length === 0) {
+         badRequestErrors.name = "Name is required.";
+      }
+
+      if (price !== undefined && price <= 0) {
+         badRequestErrors.price = "Price must be greater than zero.";
+      }
+
+      if (Object.keys(badRequestErrors).length > 0) {
+         throw new BadRequest(
+            "Validation failed for one or more fields.",
+            badRequestErrors // Pass the structured errors
+         );
+      }
+
+      const existingProduct = await this.productRepo.getProductByName(name);
+
+      if (existingProduct) {
+         throw new ConflictError(`Product name '${name}' already exists.`, {
+            name: `The product name '${name}' is already in use.`,
+         });
+      }
+
+      const finalSlug =
+         slug && slug.trim() !== "" ? slugify(slug) : slugify(name);
+
+      const categories = await this.categoryRepo.getByIds(categoryIds);
+      if (categories.length !== categoryIds.length) {
+         throw new BadRequest("Some category IDs are invalid.");
+      }
+      // 4. If all validation passes, proceed with creation
+      const productData: InsertProductModel = {
+         name,
+         slug: finalSlug,
+         price,
+         stock,
+         description,
+         imageUrl,
+         categoryIds,
+         createdBy: userId,
+      };
+
+      const product = await this.productRepo.add(productData);
+
+      await cache.delByPrefix("products");
+
+      const responseData: ProductResponseDTO = {
+         ...product,
+         price: Number(product.price),
+      };
+
+      return {
+         success: true,
+         data: responseData,
+         message: "Product created successfully",
+      };
    }
 }
