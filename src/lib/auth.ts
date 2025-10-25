@@ -42,6 +42,7 @@ export const auth = betterAuth({
       adminPlugin({
          ac,
          roles: rolesObj,
+         defaultRole: "admin",
       }),
       bearerPlugin({}),
    ],
