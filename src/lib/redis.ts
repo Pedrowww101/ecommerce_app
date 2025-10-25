@@ -11,7 +11,7 @@ if (REDIS_URL) {
       tls: {}, // required for Redis Cloud SSL
    });
 } else {
-   // ✅ fallback for local dev
+   // ✅ fallbacks
    const REDIS_HOST = process.env.REDIS_HOST || "localhost";
    const REDIS_PORT = process.env.REDIS_PORT
       ? parseInt(process.env.REDIS_PORT)
