@@ -8,7 +8,9 @@ let redis: Redis;
 if (REDIS_URL) {
    // ✅ for Render or Redis Cloud (uses rediss://... connection)
    redis = new Redis(REDIS_URL, {
-      tls: {}, // required for Redis Cloud SSL
+      tls: {
+         rejectUnauthorized: false,
+      }, // required for Redis Cloud SSL
    });
 } else {
    // ✅ fallbacks
