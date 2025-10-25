@@ -1,7 +1,7 @@
-import { AppError } from "./app-error.js";
+import { AppError, AppErrorStatusCode } from "./app-error.js";
 
 export class ServiceUnavailableError extends AppError {
-   constructor(message = "Service Unavailable") {
-      super(message, 503);
+   constructor(message: "string", details?: Record<string, unknown> | string) {
+      super(message, 503 as AppErrorStatusCode, details);
    }
 }
