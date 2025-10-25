@@ -303,9 +303,13 @@ export class ProductCategoryService {
 
       await cache.delByPrefix("products");
 
+      const productCategories = await this.categoryRepo.getProductByIds(
+         product.id
+      );
       const responseData: ProductResponseDTO = {
          ...product,
          price: Number(product.price),
+         categories: productCategories.map((c) => c.name),
       };
 
       return {

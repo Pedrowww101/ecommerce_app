@@ -59,4 +59,5 @@ export type ProductResponseDTO = Omit<
    "price" | "createdAt" | "updatedAt"
 > & {
    price: number;
+   categories?: string[];
 };

@@ -1,6 +1,6 @@
 import { eq, inArray, sql } from "drizzle-orm";
 import { PaginationParams } from "../../common/utils/pagination.js";
-import { categories } from "../app-schema.js";
+import { categories, products } from "../app-schema.js";
 import { db, DrizzleClient } from "../client.js";
 import {
    InsertCategoriesModel,
@@ -61,6 +61,20 @@ export class CategoriesRepository {
          id: c.id,
          name: c.name,
       }));
+   }
+
+   async getProductByIds(id: string | string[]) {
+      if (!id) return [];
+
+      // Normalize to array
+      const ids = Array.isArray(id) ? id : [id];
+
+      const productsList = await db
+         .select()
+         .from(products)
+         .where(inArray(products.id, ids));
+
+      return productsList;
    }
 
    async getByName(name: string) {
