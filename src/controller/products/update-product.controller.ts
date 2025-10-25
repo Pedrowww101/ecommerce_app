@@ -14,12 +14,13 @@ export const updateProductController = factory.createHandlers(
    validator("json", updateProductDTO),
    async (c) => {
       const { id } = c.req.valid("param");
+      const user = c.get("user");
 
       const body = c.req.valid("json");
       const productRepo = new ProductsRepository();
       const productService = new ProductService(productRepo);
 
-      const result = await productService.updateProduct(id, body);
+      const result = await productService.updateProduct(user!.id, id, body);
       return c.json(result, 200);
    }
 );

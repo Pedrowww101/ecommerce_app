@@ -95,6 +95,7 @@ export class ProductService {
    }
 
    async updateProduct(
+      userId: string,
       productId: string,
       dto: UpdateProductDTO
    ): Promise<ApiResponse<ProductResponseDTO>> {
@@ -138,7 +139,10 @@ export class ProductService {
             { slug: `The product slug '${finalSlug}' is already in use.` }
          );
       }
-      const updatePayload: Partial<UpdateProductModel> = { slug: finalSlug };
+      const updatePayload: Partial<UpdateProductModel> = {
+         slug: finalSlug,
+         updatedBy: userId,
+      };
 
       if (name !== undefined) updatePayload.name = name;
       if (price !== undefined) {
