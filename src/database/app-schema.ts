@@ -51,6 +51,11 @@ export const products = pgTable("products", {
       mode: "string",
    }).notNull(),
    stock: integer("stock").default(0).notNull(),
+   rating: numeric("rating", {
+      precision: 2,
+      scale: 1,
+      mode: "number",
+   }).default(0),
    imageUrl: text("image_url"),
    createdBy: text("created_by").references(() => users.id, {
       onDelete: "set null",
@@ -60,6 +65,25 @@ export const products = pgTable("products", {
    }),
    createdAt: timestamp("created_at").defaultNow().notNull(),
    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ---------------------- REVIEWS ----------------------
+
+export const productReviews = pgTable("product_reviews", {
+   id: uuid("id").defaultRandom().primaryKey(),
+   productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+   userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+   rating: numeric("rating", {
+      precision: 2,
+      scale: 1,
+      mode: "number",
+   }).notNull(),
+   comment: text("comment"),
+   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // ---------------------- CATEGORIES ----------------------
@@ -76,6 +100,7 @@ export const categories = pgTable("categories", {
 });
 
 // ---------------------- PRODUCT_CATEGORIES (Join Table) ----------------------
+
 export const productCategories = pgTable(
    "product_categories",
    {
@@ -175,6 +200,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
    productCategories: many(productCategories),
    cartItems: many(cartItems),
    orderItems: many(orderItems),
+   reviews: many(productReviews),
 }));
 
 // ---------- CATEGORIES RELATIONS ----------
