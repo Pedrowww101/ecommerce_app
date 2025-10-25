@@ -1,19 +1,14 @@
-import { Redis } from "ioredis";
+import { createClient } from "redis";
 
-const REDIS_URL = process.env.REDIS_URL;
-
-if (!REDIS_URL) {
-   throw new Error("❌ Missing REDIS_URL in environment");
-}
-
-const redis = new Redis(REDIS_URL);
-
-redis.on("connect", () => {
-   console.log("✅ Connected to Redis!");
+export const redis = createClient({
+   username: "default",
+   password: "OBlDbbAZYQD2zLGqXCmeN7DrCzxRZTIN",
+   socket: {
+      host: "redis-11773.crce178.ap-east-1-1.ec2.redns.redis-cloud.com",
+      port: 11773,
+   },
 });
 
-redis.on("error", (err) => {
-   console.error("❌ Redis error:", err);
-});
+redis.on("error", (err) => console.log("Redis Client Error", err));
 
-export default redis;
+await redis.connect();
