@@ -8,6 +8,7 @@ import {
    PaginatedResult,
    PaginationMeta,
    PaginationParams,
+   SearchFilterQuery,
 } from "../common/utils/pagination.js";
 import {
    CreateProductDTO,
@@ -28,7 +29,8 @@ export class ProductService {
    constructor(private productRepo: ProductsRepository) {}
 
    async getAllProducts(
-      params: PaginationParams
+      params: PaginationParams,
+      filters?: SearchFilterQuery
    ): Promise<ApiResponse<PaginatedResult<ProductResponseDTO>>> {
       const { page, limit } = params;
 
@@ -41,25 +43,20 @@ export class ProductService {
          throw new BadRequest("Invalid pagination parameters", { errors });
       }
 
-      const cacheKey = `products:page:${values.page}:limit:${values.limit}`;
+      const filterString = filters ? JSON.stringify(filters) : "none";
+      const cacheKey = `products:page:${values.page}:limit:${values.limit}:filters:${filterString}`;
 
       const fetcher = async (): Promise<
          PaginatedRepositoryResult<ProductResponseDTO>
       > => {
          const { allProducts, total } = await this.productRepo.getAllProducts(
-            values
+            values,
+            filters
          );
 
          const items: ProductResponseDTO[] = allProducts.map((p) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            description: p.description,
+            ...p,
             price: Number(p.price),
-            stock: p.stock,
-            imageUrl: p.imageUrl,
-            createdBy: p.createdBy,
-            updatedBy: p.updatedBy,
          }));
 
          return { items, total };
@@ -186,15 +183,8 @@ export class ProductService {
          }
 
          return result.map((p) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            description: p.description,
-            price: Number(p.price), // normalize type
-            stock: p.stock,
-            imageUrl: p.imageUrl,
-            createdBy: p.createdBy,
-            updatedBy: p.updatedBy,
+            ...p,
+            price: Number(p.price),
          }));
       };
 

@@ -4,6 +4,12 @@ export interface PaginationParams {
    limit: number;
 }
 
+export interface SearchFilterQuery {
+   ratings?: number;
+   priceRange?: [number, number];
+   categories?: string | string[];
+}
+
 export interface PaginationMeta {
    totalItems: number;
    totalPages: number;

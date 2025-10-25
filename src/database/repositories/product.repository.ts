@@ -1,11 +1,26 @@
-import { productCategories, products } from "../app-schema.js";
+import { categories, productCategories, products } from "../app-schema.js";
 import { db, DrizzleClient } from "../client.js";
 import {
    InsertProductModel,
    UpdateProductModel,
 } from "../models/products.model.js";
-import { PaginationParams } from "../../common/utils/pagination.js";
-import { and, asc, desc, eq, lte, sql } from "drizzle-orm";
+import {
+   PaginationParams,
+   SearchFilterQuery,
+} from "../../common/utils/pagination.js";
+import {
+   and,
+   asc,
+   between,
+   desc,
+   eq,
+   exists,
+   gte,
+   inArray,
+   lte,
+   SQL,
+   sql,
+} from "drizzle-orm";
 
 export class ProductsRepository {
    private dbClient: DrizzleClient;
@@ -68,17 +83,74 @@ export class ProductsRepository {
       return product;
    }
 
-   async getAllProducts(params: PaginationParams) {
+   async getAllProducts(params: PaginationParams, filters?: SearchFilterQuery) {
       const { page, limit } = params;
       const offset = (page - 1) * limit;
+
+      const whereConditions: (SQL | undefined)[] = [];
+
+      if (filters?.ratings !== undefined) {
+         whereConditions.push(gte(products.rating, filters.ratings));
+      }
+      if (filters?.priceRange) {
+         whereConditions.push(
+            between(
+               products.price,
+               filters.priceRange[0].toString(),
+               filters.priceRange[1].toString()
+            )
+         );
+      }
+
+      if (filters?.categories !== undefined) {
+         const categoryNames = Array.isArray(filters.categories)
+            ? filters.categories
+            : [filters.categories];
+
+         const categoryResults = await this.dbClient
+            .select({ id: categories.id })
+            .from(categories)
+            .where(inArray(categories.name, categoryNames));
+
+         const categoryIds = categoryResults.map((r) => r.id);
+
+         if (categoryIds.length > 0) {
+            const categoryExists = exists(
+               this.dbClient
+                  .select({ id: productCategories.productId })
+                  .from(productCategories)
+                  .where(
+                     and(
+                        eq(productCategories.productId, products.id),
+
+                        inArray(productCategories.categoryId, categoryIds)
+                     )
+                  )
+            );
+            whereConditions.push(categoryExists);
+         } else {
+            whereConditions.push(sql`false`);
+         }
+      }
+
+      const whereClause =
+         whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+      // ------------------------------------------------------------------
+
       const allProducts = await this.dbClient.query.products.findMany({
          limit: limit,
          offset,
+         where: whereClause,
+         with: {
+            productCategories: true,
+         },
       });
 
       const totalResult = await this.dbClient
          .select({ count: sql<number>`count(*)` })
-         .from(products);
+         .from(products)
+         .where(whereClause);
 
       const total = totalResult[0].count;
 
@@ -89,8 +161,6 @@ export class ProductsRepository {
          total,
       };
    }
-
-   // For discord bot, n8n testing etc..
 
    // method for getting the latest products
    async getLatestProduct() {
