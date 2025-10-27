@@ -4,6 +4,7 @@ import { createProductDTO } from "../../database/models/products.model.js";
 import { ProductsRepository } from "../../database/repositories/product.repository.js";
 import { ProductCategoryService } from "../../services/product.service.js";
 import { CategoriesRepository } from "../../database/repositories/category.repository.js";
+import { ProductCategoryRepository } from "../../database/repositories/product-category.repository.js";
 
 export const addProductController = factory.createHandlers(
    validator("json", createProductDTO),
@@ -13,8 +14,10 @@ export const addProductController = factory.createHandlers(
 
       const productRepo = new ProductsRepository();
       const categoryRepo = new CategoriesRepository();
+      const productCategoryRepo = new ProductCategoryRepository();
       const productService = new ProductCategoryService(
          productRepo,
+         productCategoryRepo,
          categoryRepo
       );
 
