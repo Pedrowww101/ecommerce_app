@@ -11,7 +11,7 @@ export const authCorsMiddleware = () => {
             "https://ecommerce-app-g6ed.onrender.com", // backend (prod)
          ];
 
-         // ✅ Allow if request's Origin matches one of these
+         // ✅ Allow if request's Origin matches  one of these
          if (origin && allowedOrigins.includes(origin)) {
             return origin;
          }

@@ -17,11 +17,16 @@ import protectedRoutes from "./routes/protected/index.js";
 const app = new Hono<Env>()
    .basePath("/api")
 
+   // Auth routes (public)
+   .use("/auth/*", authCorsMiddleware())
+
    .use(logger())
    .onError(getGlobalErrorHandler)
 
-   // Auth routes (public)
-   .use("*", authCorsMiddleware())
+   .on("OPTIONS", "/auth/*", (c) => {
+      // Respond immediately with 204 No Content
+      return c.newResponse("", 204);
+   })
 
    .on(["POST", "GET"], "/auth/*", async (c) => {
       return await auth.handler(c.req.raw);
