@@ -18,7 +18,7 @@ const app = new Hono<Env>()
    .basePath("/api")
 
    // Auth routes (public)
-   .use("/auth/*", authCorsMiddleware())
+   .use("*", authCorsMiddleware())
 
    .use(logger())
    .onError(getGlobalErrorHandler)
