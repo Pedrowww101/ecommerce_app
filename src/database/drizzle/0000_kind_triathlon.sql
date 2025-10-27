@@ -1,5 +1,8 @@
-CREATE TYPE "public"."order_status" AS ENUM('pending', 'paid', 'shipped', 'completed', 'cancelled');--> statement-breakpoint
-CREATE TABLE "addresses" (
+DO $$ BEGIN
+  CREATE TYPE "public"."order_status" AS ENUM('pending', 'paid', 'shipped', 'completed', 'cancelled');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;CREATE TABLE "addresses" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text NOT NULL,
 	"line_1" text NOT NULL,
