@@ -23,10 +23,7 @@ const app = new Hono<Env>()
    // Auth routes (public)
    .use("/auth/*", async (c, next) => {
       console.log("CORS middleware start");
-      const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-         .split(",")
-         .map((o) => o.trim());
-      await authCorsMiddleware(allowedOrigins)(c, next);
+      await authCorsMiddleware()(c, next);
    })
    .on(["POST", "GET"], "/auth/*", async (c) => {
       return await auth.handler(c.req.raw);
