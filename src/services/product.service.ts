@@ -24,6 +24,7 @@ import { CategoriesRepository } from "../database/repositories/category.reposito
 import { cache } from "../utils/cache.js";
 import { GLOBAL_TTL_CACHE } from "../config/constants.js";
 import { validatePaginationParams } from "../utils/validators.js";
+import { ProductCategoryRepository } from "../database/repositories/product-category.repository.js";
 
 export class ProductService {
    constructor(private productRepo: ProductsRepository) {}
@@ -236,6 +237,7 @@ export class ProductService {
 export class ProductCategoryService {
    constructor(
       private productRepo: ProductsRepository,
+      private productCategoryRepo: ProductCategoryRepository,
       private categoryRepo: CategoriesRepository
    ) {}
    async createProduct(
@@ -293,7 +295,7 @@ export class ProductCategoryService {
          createdBy: userId,
       };
 
-      const product = await this.productRepo.add(productData);
+      const product = await this.productCategoryRepo.add(productData);
 
       await cache.delByPrefix("products");
 

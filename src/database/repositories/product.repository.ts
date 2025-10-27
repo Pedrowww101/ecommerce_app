@@ -1,9 +1,6 @@
 import { categories, productCategories, products } from "../app-schema.js";
 import { db, DrizzleClient } from "../client.js";
-import {
-   InsertProductModel,
-   UpdateProductModel,
-} from "../models/products.model.js";
+import { UpdateProductModel } from "../models/products.model.js";
 import {
    PaginationParams,
    SearchFilterQuery,
@@ -26,27 +23,6 @@ export class ProductsRepository {
    private dbClient: DrizzleClient;
    constructor(database?: DrizzleClient) {
       this.dbClient = database || db;
-   }
-
-   async add(data: InsertProductModel) {
-      const [newProduct] = await db
-         .insert(products)
-         .values({
-            ...data,
-            price: data.price.toFixed(2),
-         })
-         .returning();
-
-      if (data.categoryIds?.length) {
-         await db.insert(productCategories).values(
-            data.categoryIds.map((catId) => ({
-               productId: newProduct.id,
-               categoryId: catId,
-            }))
-         );
-      }
-
-      return newProduct;
    }
 
    async update(id: string, data: UpdateProductModel) {
