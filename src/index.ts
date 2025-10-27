@@ -21,10 +21,8 @@ const app = new Hono<Env>()
    .onError(getGlobalErrorHandler)
 
    // Auth routes (public)
-   .use("/auth/*", async (c, next) => {
-      console.log("CORS middleware start");
-      await authCorsMiddleware()(c, next);
-   })
+   .use("*", authCorsMiddleware())
+
    .on(["POST", "GET"], "/auth/*", async (c) => {
       return await auth.handler(c.req.raw);
    })
