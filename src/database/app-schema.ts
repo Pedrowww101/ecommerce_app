@@ -136,6 +136,15 @@ export const cartItems = pgTable(
          .notNull()
          .references(() => products.id, { onDelete: "cascade" }),
       quantity: integer("quantity").notNull(),
+
+      price: numeric("unit_price", {
+         precision: 10,
+         scale: 2,
+         mode: "string",
+      }).notNull(),
+
+      createdAt: timestamp("created_at").defaultNow().notNull(),
+      updatedAt: timestamp("updated_at").defaultNow().notNull(),
    },
    (t) => ({
       pk: primaryKey({ columns: [t.cartId, t.productId] }),
