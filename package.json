@@ -10,6 +10,7 @@
       "start": "cross-env NODE_ENV=dev node dist/index.js",
       "db:generate": "pnpm drizzle-kit generate",
       "db:migrate": "pnpm drizzle-kit migrate",
+      "db:push": "pnpm drizzle-kit push",
       "db:studio": "pnpm exec drizzle-kit studio",
       "ba:generate": "npx @better-auth/cli generate --output src/database/auth-schema.ts",
       "ba:migrate": "npx @better-auth/cli migrate",

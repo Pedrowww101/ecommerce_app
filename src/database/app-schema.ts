@@ -188,10 +188,16 @@ export const usersRelations = relations(users, ({ many }) => ({
    addresses: many(addresses),
    carts: many(carts),
    orders: many(orders),
-   products: many(products),
-   categories: many(categories),
+   createdProducts: many(products, {
+      relationName: "createdBy",
+   }),
+   updatedProducts: many(products, {
+      relationName: "updatedBy",
+   }),
+   createdCategories: many(categories, {
+      relationName: "createdBy",
+   }),
 }));
-
 // ---------- ADDRESSES RELATIONS ----------
 export const addressesRelations = relations(addresses, ({ one }) => ({
    user: one(users, {
@@ -205,11 +211,33 @@ export const productsRelations = relations(products, ({ one, many }) => ({
    createdBy: one(users, {
       fields: [products.createdBy],
       references: [users.id],
+      relationName: "createdBy",
+   }),
+   updatedBy: one(users, {
+      fields: [products.updatedBy],
+      references: [users.id],
+      relationName: "updatedBy",
    }),
    productCategories: many(productCategories),
    cartItems: many(cartItems),
    orderItems: many(orderItems),
-   reviews: many(productReviews),
+
+   productReviews: many(productReviews, {
+      relationName: "productReviews",
+   }),
+}));
+
+// ---------- PRODUCT_REVIEWS RELATIONS ----------
+export const productReviewsRelations = relations(productReviews, ({ one }) => ({
+   product: one(products, {
+      fields: [productReviews.productId],
+      references: [products.id],
+      relationName: "productReviews", // Matches productsRelations
+   }),
+   user: one(users, {
+      fields: [productReviews.userId],
+      references: [users.id],
+   }),
 }));
 
 // ---------- CATEGORIES RELATIONS ----------
@@ -217,6 +245,7 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
    createdBy: one(users, {
       fields: [categories.createdBy],
       references: [users.id],
+      relationName: "createdBy",
    }),
    productCategories: many(productCategories),
 }));
