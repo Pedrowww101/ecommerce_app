@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { count, eq, inArray } from "drizzle-orm";
 import { PaginationParams } from "../../common/utils/pagination.js";
 import { categories, products } from "../app-schema.js";
 import { db, DrizzleClient } from "../client.js";
@@ -31,7 +31,7 @@ export class CategoriesRepository {
       });
 
       const totalResult = await this.dbClient
-         .select({ count: sql<number>`count(*)` })
+         .select({ count: count() })
          .from(categories);
 
       const total = totalResult[0].count;

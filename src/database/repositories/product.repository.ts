@@ -9,6 +9,7 @@ import {
    and,
    asc,
    between,
+   count,
    desc,
    eq,
    exists,
@@ -37,14 +38,14 @@ export class ProductsRepository {
       return product;
    }
 
-   async getProductById(id: string) {
+   async getById(id: string) {
       const product = await this.dbClient.query.products.findFirst({
          where: eq(products.id, id),
       });
       return product;
    }
 
-   async getProductByName(name: string) {
+   async getByName(name: string) {
       const product = await this.dbClient.query.products.findFirst({
          where: eq(products.name, name),
       });
@@ -52,22 +53,23 @@ export class ProductsRepository {
       return product;
    }
 
-   async getProductBySlug(slug: string) {
+   async getBySlug(slug: string) {
       const product = await this.dbClient.query.products.findFirst({
          where: eq(products.slug, slug),
       });
       return product;
    }
 
-   async getAllProducts(params: PaginationParams, filters?: SearchFilterQuery) {
+   async getAll(params: PaginationParams, filters?: SearchFilterQuery) {
       const { page, limit } = params;
       const offset = (page - 1) * limit;
-
       const whereConditions: (SQL | undefined)[] = [];
 
+      // --- Dynamic Filters ---
       if (filters?.ratings !== undefined) {
          whereConditions.push(gte(products.rating, filters.ratings));
       }
+
       if (filters?.priceRange) {
          whereConditions.push(
             between(
@@ -98,7 +100,6 @@ export class ProductsRepository {
                   .where(
                      and(
                         eq(productCategories.productId, products.id),
-
                         inArray(productCategories.categoryId, categoryIds)
                      )
                   )
@@ -112,29 +113,29 @@ export class ProductsRepository {
       const whereClause =
          whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
-      // ------------------------------------------------------------------
+      // --- Parallel Queries for Performance ---
+      const [allProducts, totalResult] = await Promise.all([
+         this.dbClient.query.products.findMany({
+            limit,
+            offset,
+            where: whereClause,
+            with: {
+               productCategories: {
+                  columns: { categoryId: true },
+               },
+            },
+         }),
+         this.dbClient
+            .select({ count: count() })
+            .from(products)
+            .where(whereClause),
+      ]);
 
-      const allProducts = await this.dbClient.query.products.findMany({
-         limit: limit,
-         offset,
-         where: whereClause,
-         with: {
-            productCategories: true,
-         },
-      });
-
-      const totalResult = await this.dbClient
-         .select({ count: sql<number>`count(*)` })
-         .from(products)
-         .where(whereClause);
-
-      const total = totalResult[0].count;
+      const total = totalResult[0]?.count ?? 0;
 
       return {
-         allProducts,
-         page,
-         limit,
-         total,
+         products: allProducts,
+         meta: { page, limit, total },
       };
    }
 

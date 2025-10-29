@@ -49,7 +49,7 @@ export const createProductDTO = insertProductWithCategorySchema.omit(
 );
 export const updateProductDTO = updateProductSchema
    .partial()
-   .omit("rating", "createdAt", "updatedAt", "createdBy");
+   .omit("id", "rating", "createdAt", "updatedAt", "createdBy");
 
 export type CreateProductDTO = typeof createProductDTO.infer;
 export type UpdateProductDTO = typeof updateProductDTO.infer;
