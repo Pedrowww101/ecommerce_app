@@ -32,7 +32,7 @@ export const createCategoryDTO = insertCategoriesModel.omit(
 
 export const updateCategoryDTO = updateCategoriesModel
    .partial()
-   .omit("id", "createdAt", "updatedAt");
+   .omit("id", "createdAt", "createdBy", "updatedAt");
 
 export const selectCategoryDTO = selectCategoriesModel.omit(
    "createdAt",

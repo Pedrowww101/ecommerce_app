@@ -29,7 +29,7 @@ import { ProductCategoryRepository } from "../database/repositories/product-cate
 export class ProductService {
    constructor(private productRepo: ProductsRepository) {}
 
-   async getAllProducts(
+   async getAll(
       params: PaginationParams,
       filters?: SearchFilterQuery
    ): Promise<ApiResponse<PaginatedResult<ProductResponseDTO>>> {
@@ -50,12 +50,9 @@ export class ProductService {
       const fetcher = async (): Promise<
          PaginatedRepositoryResult<ProductResponseDTO>
       > => {
-         const { allProducts, total } = await this.productRepo.getAllProducts(
-            values,
-            filters
-         );
+         const { products } = await this.productRepo.getAll(values, filters);
 
-         const items: ProductResponseDTO[] = allProducts.map((p) => ({
+         const items: ProductResponseDTO[] = products.map((p) => ({
             ...p,
             price: Number(p.price),
          }));
@@ -117,7 +114,7 @@ export class ProductService {
          );
       }
 
-      const existingProduct = await this.productRepo.getProductById(productId);
+      const existingProduct = await this.productRepo.getById(productId);
       if (!existingProduct) {
          throw new NotFound("Product not found");
       }
@@ -127,9 +124,7 @@ export class ProductService {
       const finalSlug =
          slug && slug.trim() !== "" ? slugify(slug) : slugify(nameToSlugify);
 
-      const existingProductBySlug = await this.productRepo.getProductBySlug(
-         finalSlug
-      );
+      const existingProductBySlug = await this.productRepo.getBySlug(finalSlug);
 
       if (existingProductBySlug && existingProductBySlug.id !== productId) {
          throw new ConflictError(
@@ -268,7 +263,7 @@ export class ProductCategoryService {
          );
       }
 
-      const existingProduct = await this.productRepo.getProductByName(name);
+      const existingProduct = await this.productRepo.getByName(name);
 
       if (existingProduct) {
          throw new ConflictError(`Product name '${name}' already exists.`, {

@@ -22,7 +22,7 @@ export const getAllProductsController = factory.createHandlers(
       const productRepo = new ProductsRepository();
       const productService = new ProductService(productRepo);
 
-      const result = await productService.getAllProducts(queryNumber);
+      const result = await productService.getAll(queryNumber);
 
       return c.json(result, 200);
    }
