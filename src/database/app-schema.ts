@@ -126,31 +126,25 @@ export const carts = pgTable("carts", {
 });
 
 // ---------------------- CART_ITEMS ----------------------
-export const cartItems = pgTable(
-   "cart_items",
-   {
-      id: uuid("id").defaultRandom().primaryKey(),
-      cartId: uuid("cart_id")
-         .notNull()
-         .references(() => carts.id, { onDelete: "cascade" }),
-      productId: uuid("product_id")
-         .notNull()
-         .references(() => products.id, { onDelete: "cascade" }),
-      quantity: integer("quantity").notNull(),
+export const cartItems = pgTable("cart_items", {
+   id: uuid("id").defaultRandom().primaryKey(),
+   cartId: uuid("cart_id")
+      .notNull()
+      .references(() => carts.id, { onDelete: "cascade" }),
+   productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+   quantity: integer("quantity").notNull(),
 
-      price: numeric("unit_price", {
-         precision: 10,
-         scale: 2,
-         mode: "string",
-      }).notNull(),
+   price: numeric("unit_price", {
+      precision: 10,
+      scale: 2,
+      mode: "string",
+   }).notNull(),
 
-      createdAt: timestamp("created_at").defaultNow().notNull(),
-      updatedAt: timestamp("updated_at").defaultNow().notNull(),
-   },
-   (t) => ({
-      pk: primaryKey({ columns: [t.cartId, t.productId] }),
-   })
-);
+   createdAt: timestamp("created_at").defaultNow().notNull(),
+   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
 // ---------------------- ORDERS ----------------------
 
