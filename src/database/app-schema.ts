@@ -129,6 +129,7 @@ export const carts = pgTable("carts", {
 export const cartItems = pgTable(
    "cart_items",
    {
+      id: uuid("id").defaultRandom().primaryKey(),
       cartId: uuid("cart_id")
          .notNull()
          .references(() => carts.id, { onDelete: "cascade" }),
