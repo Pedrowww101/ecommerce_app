@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1761374752655,
-      "tag": "0000_kind_triathlon",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1761539597134,
-      "tag": "0001_cooing_meggan",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1761636604713,
-      "tag": "0002_tearful_namor",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1761799195618,
-      "tag": "0003_huge_mimic",
+      "when": 1761801304133,
+      "tag": "0000_famous_changeling",
       "breakpoints": true
     }
   ]
