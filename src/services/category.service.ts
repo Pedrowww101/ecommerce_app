@@ -49,55 +49,59 @@ export class CategoriesService {
       };
    }
 
+   // category.service.ts
    async getAll(
       params: PaginationParams
    ): Promise<ApiResponse<PaginatedResult<CategoriesResponseDTO>>> {
       const { page, limit } = params;
 
+      // --- Validate pagination ---
       const { isValid, values, errors } = validatePaginationParams({
          page,
          limit,
       });
-
       if (!isValid) {
          throw new BadRequest("Invalid pagination parameters", { errors });
       }
 
+      // --- Cache Key ---
       const cacheKey = `categories:page:${values.page}:limit:${values.limit}`;
 
+      // --- Fetcher (used by cache.remember) ---
       const fetcher = async (): Promise<
          PaginatedRepositoryResult<CategoriesResponseDTO>
       > => {
-         const { allCategories, total } =
-            await this.categoryRepo.getAllCategories(values);
-
+         const { allCategories, total } = await this.categoryRepo.getAll(
+            values
+         );
          return { items: allCategories, total };
       };
 
+      // --- Retrieve from cache or fetch fresh ---
       const { items: allCategories, total } = await cache.remember<
          PaginatedRepositoryResult<CategoriesResponseDTO>
       >(cacheKey, GLOBAL_TTL_CACHE, fetcher);
 
-      const totalPages = Math.ceil(total / limit);
+      // --- Pagination Meta ---
+      const totalPages = values.limit > 0 ? Math.ceil(total / values.limit) : 1;
 
       const meta: PaginationMeta = {
          page: values.page,
          limit: values.limit,
          totalItems: total,
          totalPages,
-         hasNextPage: page < totalPages,
-         hasPrevPage: page > 1,
+         hasNextPage: values.page < totalPages,
+         hasPrevPage: values.page > 1,
       };
 
-      const paginatedResult: PaginatedResult<CategoriesResponseDTO> = {
-         data: allCategories,
-         meta,
-      };
-
+      // --- Final Paginated Result ---
       return {
          success: true,
-         data: paginatedResult,
-         message: "All Categories fetched successfully.",
+         message: "All categories fetched successfully.",
+         data: {
+            data: allCategories,
+            meta,
+         },
       };
    }
 }

@@ -4,7 +4,6 @@ import { ConflictError } from "../common/errors/ConflictError.js";
 import { NotFound } from "../common/errors/NotFoundError.js";
 import { ApiResponse } from "../common/responses/ApiResponse.js";
 import {
-   PaginatedRepositoryResult,
    PaginatedResult,
    PaginationMeta,
    PaginationParams,
@@ -33,59 +32,37 @@ export class ProductService {
       params: PaginationParams,
       filters?: SearchFilterQuery
    ): Promise<ApiResponse<PaginatedResult<ProductResponseDTO>>> {
-      const { page, limit } = params;
-
-      const { isValid, values, errors } = validatePaginationParams({
-         page,
-         limit,
-      });
-
-      if (!isValid) {
+      const { isValid, values, errors } = validatePaginationParams(params);
+      if (!isValid)
          throw new BadRequest("Invalid pagination parameters", { errors });
-      }
 
-      const filterString = filters ? JSON.stringify(filters) : "none";
-      const cacheKey = `products:page:${values.page}:limit:${values.limit}:filters:${filterString}`;
+      const cacheKey = `products:page:${values.page}:limit:${
+         values.limit
+      }:filters:${JSON.stringify(filters || {})}`;
 
-      const fetcher = async (): Promise<
-         PaginatedRepositoryResult<ProductResponseDTO>
-      > => {
-         const { products } = await this.productRepo.getAll(values, filters);
+      const fetcher = async () => this.productRepo.getAll(values, filters);
 
-         const items: ProductResponseDTO[] = products.map((p) => ({
-            ...p,
-            price: Number(p.price),
-         }));
-
-         return { items, total };
-      };
-
-      const { items: mappedProducts, total } = await cache.remember(
+      const { allProducts, total } = await cache.remember(
          cacheKey,
          GLOBAL_TTL_CACHE,
          fetcher
       );
 
-      const totalPages = Math.ceil(total / limit);
+      const totalPages = values.limit > 0 ? Math.ceil(total / values.limit) : 1;
 
       const meta: PaginationMeta = {
          page: values.page,
          limit: values.limit,
          totalItems: total,
          totalPages,
-         hasNextPage: page < totalPages,
-         hasPrevPage: page > 1,
-      };
-
-      const paginatedResult: PaginatedResult<ProductResponseDTO> = {
-         data: mappedProducts,
-         meta,
+         hasNextPage: values.page < totalPages,
+         hasPrevPage: values.page > 1,
       };
 
       return {
          success: true,
-         data: paginatedResult,
          message: "Products retrieved successfully",
+         data: { data: allProducts, meta },
       };
    }
 

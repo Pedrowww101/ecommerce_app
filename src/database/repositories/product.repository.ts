@@ -1,6 +1,9 @@
 import { categories, productCategories, products } from "../app-schema.js";
 import { db, DrizzleClient } from "../client.js";
-import { UpdateProductModel } from "../models/products.model.js";
+import {
+   ProductResponseDTO,
+   UpdateProductModel,
+} from "../models/products.model.js";
 import {
    PaginationParams,
    SearchFilterQuery,
@@ -60,7 +63,13 @@ export class ProductsRepository {
       return product;
    }
 
-   async getAll(params: PaginationParams, filters?: SearchFilterQuery) {
+   async getAll(
+      params: PaginationParams,
+      filters?: SearchFilterQuery
+   ): Promise<{
+      allProducts: ProductResponseDTO[];
+      total: number;
+   }> {
       const { page, limit } = params;
       const offset = (page - 1) * limit;
       const whereConditions: (SQL | undefined)[] = [];
@@ -114,7 +123,7 @@ export class ProductsRepository {
          whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
       // --- Parallel Queries for Performance ---
-      const [allProducts, totalResult] = await Promise.all([
+      const [rawProducts, totalResult] = await Promise.all([
          this.dbClient.query.products.findMany({
             limit,
             offset,
@@ -133,9 +142,14 @@ export class ProductsRepository {
 
       const total = totalResult[0]?.count ?? 0;
 
+      const allProducts: ProductResponseDTO[] = rawProducts.map((p) => ({
+         ...p,
+         price: Number(p.price),
+      }));
+
       return {
-         products: allProducts,
-         meta: { page, limit, total },
+         allProducts,
+         total,
       };
    }
 

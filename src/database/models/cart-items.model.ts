@@ -37,6 +37,17 @@ export const updateCartItemsDTO = updateCartItemsSchema
 export type SelectCartItemsDTO = typeof selectCartItemsDTO.infer;
 export type InsertCartItemsDTO = typeof insertCartItemsDTO.infer;
 export type UpdateCartItemsDTO = typeof updateCartItemsDTO.infer;
-export type CartItemsResponseDTO = Omit<SelectCartItemsDTO, "price"> & {
+export type CartItemsResponseDTO = {
+   id: string;
+   quantity: number;
    price: number;
+   product: {
+      id: string;
+      name: string;
+      imageUrl: string | null;
+   };
+   cart: {
+      id: string;
+      userId: string;
+   };
 };

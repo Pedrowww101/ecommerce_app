@@ -3,6 +3,7 @@ import { PaginationParams } from "../../common/utils/pagination.js";
 import { categories, products } from "../app-schema.js";
 import { db, DrizzleClient } from "../client.js";
 import {
+   CategoriesResponseDTO,
    InsertCategoriesModel,
    UpdateCategoriesModel,
 } from "../models/categories.model.js";
@@ -22,26 +23,24 @@ export class CategoriesRepository {
       return newCategory;
    }
 
-   async getAllCategories(params: PaginationParams) {
+   async getAll(params: PaginationParams): Promise<{
+      allCategories: CategoriesResponseDTO[];
+      total: number;
+   }> {
       const { page, limit } = params;
       const offset = (page - 1) * limit;
-      const allCategories = await this.dbClient.query.categories.findMany({
-         limit: limit,
-         offset,
-      });
 
-      const totalResult = await this.dbClient
-         .select({ count: count() })
-         .from(categories);
+      const [allCategories, totalResult] = await Promise.all([
+         this.dbClient.query.categories.findMany({
+            limit,
+            offset,
+         }),
+         this.dbClient.select({ count: count() }).from(categories),
+      ]);
 
-      const total = totalResult[0].count;
+      const total = totalResult[0]?.count ?? 0;
 
-      return {
-         allCategories,
-         page,
-         limit,
-         total,
-      };
+      return { allCategories, total };
    }
 
    async getById(id: string) {
