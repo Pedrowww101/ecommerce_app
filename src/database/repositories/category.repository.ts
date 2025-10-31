@@ -84,6 +84,13 @@ export class CategoriesRepository {
       return category;
    }
 
+   async getBySlug(slug: string) {
+      const category = await this.dbClient.query.categories.findFirst({
+         where: eq(categories.slug, slug),
+      });
+      return category;
+   }
+
    async update(id: string, data: UpdateCategoriesModel) {
       const [category] = await this.dbClient
          .update(categories)

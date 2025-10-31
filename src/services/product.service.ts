@@ -24,6 +24,7 @@ import { cache } from "../utils/cache.js";
 import { GLOBAL_TTL_CACHE } from "../config/constants.js";
 import { validatePaginationParams } from "../utils/validators.js";
 import { ProductCategoryRepository } from "../database/repositories/product-category.repository.js";
+import { logger } from "../lib/logger.js";
 
 export class ProductService {
    constructor(private productRepo: ProductsRepository) {}
@@ -40,13 +41,35 @@ export class ProductService {
          values.limit
       }:filters:${JSON.stringify(filters || {})}`;
 
+      logger.debug({
+         msg: "[ProductService] Fetching products...",
+         pagination: values,
+         filters: filters || {},
+         cacheKey,
+      });
+
       const fetcher = async () => this.productRepo.getAll(values, filters);
 
+      // 🟢 Handle cache (with structured logs)
       const { allProducts, total } = await cache.remember(
          cacheKey,
          GLOBAL_TTL_CACHE,
-         fetcher
+         async () => {
+            logger.warn({
+               msg: "CACHE MISS – Fetching fresh data...",
+               cacheKey,
+            });
+            return fetcher();
+         }
       );
+
+      logger.info({
+         msg: "[ProductService] Retrieved products",
+         fetched: allProducts.length,
+         total,
+         page: values.page,
+         limit: values.limit,
+      });
 
       const totalPages = values.limit > 0 ? Math.ceil(total / values.limit) : 1;
 
@@ -58,6 +81,11 @@ export class ProductService {
          hasNextPage: values.page < totalPages,
          hasPrevPage: values.page > 1,
       };
+
+      logger.debug({
+         msg: "[ProductService] Computed pagination meta",
+         meta,
+      });
 
       return {
          success: true,
@@ -209,9 +237,10 @@ export class ProductService {
 export class ProductCategoryService {
    constructor(
       private productRepo: ProductsRepository,
-      private productCategoryRepo: ProductCategoryRepository,
-      private categoryRepo: CategoriesRepository
+      private categoryRepo: CategoriesRepository,
+      private productCategoryRepo: ProductCategoryRepository
    ) {}
+
    async createProduct(
       userId: string,
       dto: CreateProductDTO
@@ -221,8 +250,9 @@ export class ProductCategoryService {
 
       const badRequestErrors: Record<string, string> = {};
 
+      // 🧩 Basic validation
       if (!userId || typeof userId !== "string" || !userId.trim()) {
-         throw new BadRequest("Product ID is required.");
+         throw new BadRequest("User ID is required.");
       }
 
       if (!name || name.trim().length === 0) {
@@ -234,28 +264,66 @@ export class ProductCategoryService {
       }
 
       if (Object.keys(badRequestErrors).length > 0) {
+         logger.warn({
+            msg: "[ProductService] Validation failed for product creation.",
+            userId,
+            errors: badRequestErrors,
+         });
          throw new BadRequest(
             "Validation failed for one or more fields.",
-            badRequestErrors // Pass the structured errors
+            badRequestErrors
          );
-      }
-
-      const existingProduct = await this.productRepo.getByName(name);
-
-      if (existingProduct) {
-         throw new ConflictError(`Product name '${name}' already exists.`, {
-            name: `The product name '${name}' is already in use.`,
-         });
       }
 
       const finalSlug =
          slug && slug.trim() !== "" ? slugify(slug) : slugify(name);
 
-      const categories = await this.categoryRepo.getByIds(categoryIds);
+      logger.debug({
+         msg: "[ProductService] Checking product and category conflicts...",
+         name,
+         slug: finalSlug,
+         categoryIds,
+      });
+
+      // 🟢 Parallel lookups
+      const [existingProduct, existingProductSlug, categories] =
+         await Promise.all([
+            this.productRepo.getByName(name),
+            this.productRepo.getBySlug(finalSlug),
+            this.categoryRepo.getByIds(categoryIds),
+         ]);
+
+      if (existingProduct) {
+         logger.warn({
+            msg: "[ProductService] Duplicate product name detected.",
+            name,
+            userId,
+         });
+         throw new ConflictError(`Product name '${name}' already exists.`, {
+            name: `The product name '${name}' is already in use.`,
+         });
+      }
+
+      if (existingProductSlug) {
+         logger.warn({
+            msg: "[ProductService] Duplicate product slug detected.",
+            slug: finalSlug,
+            userId,
+         });
+         throw new ConflictError(
+            `Product slug: ${finalSlug} is already used. Please try another.`
+         );
+      }
+
       if (categories.length !== categoryIds.length) {
+         logger.warn({
+            msg: "[ProductService] Invalid category IDs detected.",
+            provided: categoryIds,
+            validCount: categories.length,
+         });
          throw new BadRequest("Some category IDs are invalid.");
       }
-      // 4. If all validation passes, proceed with creation
+
       const productData: InsertProductModel = {
          name,
          slug: finalSlug,
@@ -267,9 +335,23 @@ export class ProductCategoryService {
          createdBy: userId,
       };
 
+      // 🟡 Log before creation
+      logger.info({
+         msg: "[ProductService] Creating product...",
+         name,
+         slug: finalSlug,
+         userId,
+      });
+
       const product = await this.productCategoryRepo.add(productData);
 
+      // 🧹 Invalidate product cache
       await cache.delByPrefix("products");
+
+      logger.info({
+         msg: "[ProductService] Cache invalidated after product creation.",
+         cachePrefix: "products",
+      });
 
       const productCategories = await this.categoryRepo.getProductByIds(
          product.id
@@ -279,6 +361,15 @@ export class ProductCategoryService {
          price: Number(product.price),
          categories: productCategories.map((c) => c.name),
       };
+
+      // ✅ Success log
+      logger.info({
+         msg: "[ProductService] Product created successfully.",
+         productId: product.id,
+         name: product.name,
+         slug: product.slug,
+         createdBy: userId,
+      });
 
       return {
          success: true,

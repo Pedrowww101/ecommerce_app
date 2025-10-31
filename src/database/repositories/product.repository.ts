@@ -22,6 +22,7 @@ import {
    SQL,
    sql,
 } from "drizzle-orm";
+import { logger } from "../../lib/logger.js";
 
 export class ProductsRepository {
    private dbClient: DrizzleClient;
@@ -74,6 +75,12 @@ export class ProductsRepository {
       const offset = (page - 1) * limit;
       const whereConditions: (SQL | undefined)[] = [];
 
+      logger.debug({
+         msg: "[ProductRepository] Building query...",
+         pagination: { page, limit, offset },
+         filters: filters || {},
+      });
+
       // --- Dynamic Filters ---
       if (filters?.ratings !== undefined) {
          whereConditions.push(gte(products.rating, filters.ratings));
@@ -94,12 +101,16 @@ export class ProductsRepository {
             ? filters.categories
             : [filters.categories];
 
+         logger.debug({ msg: "Resolving category filters", categoryNames });
+
          const categoryResults = await this.dbClient
             .select({ id: categories.id })
             .from(categories)
             .where(inArray(categories.name, categoryNames));
 
          const categoryIds = categoryResults.map((r) => r.id);
+
+         logger.debug({ msg: "Category IDs found", categoryIds });
 
          if (categoryIds.length > 0) {
             const categoryExists = exists(
@@ -115,12 +126,21 @@ export class ProductsRepository {
             );
             whereConditions.push(categoryExists);
          } else {
+            logger.warn({
+               msg: "No matching categories found; returning empty set",
+               categoryNames,
+            });
             whereConditions.push(sql`false`);
          }
       }
 
       const whereClause =
          whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+      logger.debug({
+         msg: "Final whereClause built",
+         hasWhereClause: !!whereClause,
+      });
 
       // --- Parallel Queries for Performance ---
       const [rawProducts, totalResult] = await Promise.all([
@@ -141,6 +161,13 @@ export class ProductsRepository {
       ]);
 
       const total = totalResult[0]?.count ?? 0;
+
+      logger.info({
+         msg: "[ProductRepository] Query fetched results",
+         fetched: rawProducts.length,
+         total,
+         page,
+      });
 
       const allProducts: ProductResponseDTO[] = rawProducts.map((p) => ({
          ...p,

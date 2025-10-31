@@ -13,6 +13,7 @@ import {
    CreateCategoriesDTO,
 } from "../database/models/categories.model.js";
 import { CategoriesRepository } from "../database/repositories/category.repository.js";
+import { logger } from "../lib/logger.js";
 import { cache } from "../utils/cache.js";
 import { slugify } from "../utils/slugify.js";
 import { validatePaginationParams } from "../utils/validators.js";
@@ -25,22 +26,51 @@ export class CategoriesService {
       dto: CreateCategoriesDTO
    ): Promise<ApiResponse<CategoriesResponseDTO>> {
       const { name, slug } = dto;
-      if (!dto.name) throw new BadRequest("Category Name is required.");
 
-      const existingCategoryName = await this.categoryRepo.getByName(name);
+      // ✅ Step 1: Basic validation (no DB calls yet)
+      if (!name || name.trim().length === 0) {
+         throw new BadRequest("Category name is required.");
+      }
 
-      if (existingCategoryName)
+      if (!userId || typeof userId !== "string" || !userId.trim()) {
+         throw new BadRequest("User ID is required.");
+      }
+
+      // ✅ Step 2: Compute slug before parallel DB queries
+      const finalSlug = slug?.trim() ? slugify(slug) : slugify(name);
+
+      // ✅ Step 3: Parallel DB lookups
+      const [existingByName, existingBySlug] = await Promise.all([
+         this.categoryRepo.getByName(name),
+         this.categoryRepo.getBySlug(finalSlug),
+      ]);
+
+      // ✅ Step 4: Business validation
+      if (existingByName) {
+         throw new ConflictError(`Category name '${name}' already exists.`, {
+            name: "Category name is already in use.",
+         });
+      }
+
+      if (existingBySlug) {
          throw new ConflictError(
-            `Category name: ${name} is already used. Please try another.`
+            `Category slug '${finalSlug}' is already used. Please try another.`
          );
+      }
 
-      const newCategory = await this.categoryRepo.add({
-         ...dto,
-         slug: slug ? slug : slugify(name),
-         createdBy: userId,
+      const [newCategory] = await Promise.all([
+         this.categoryRepo.add({
+            ...dto,
+            slug: finalSlug,
+            createdBy: userId,
+         }),
+         cache.delByPrefix("categories"),
+      ]);
+
+      logger.info({
+         msg: "Category created successfully",
+         category: { id: newCategory.id, name, slug: finalSlug },
       });
-
-      await cache.delByPrefix("categories");
 
       return {
          success: true,
