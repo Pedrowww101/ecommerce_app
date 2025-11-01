@@ -31,7 +31,6 @@ export const getAllProductsController = factory.createHandlers(
       };
       const filters: SearchFilterQuery = {};
 
-      // Price Range (min & max)
       if (params.minPrice || params.maxPrice) {
          const min = params.minPrice ? Number(params.minPrice) : 0;
          const max = params.maxPrice
@@ -40,12 +39,10 @@ export const getAllProductsController = factory.createHandlers(
          filters.priceRange = [min, max] as [number, number];
       }
 
-      // Ratings
       if (params.ratings) {
          filters.ratings = Number(params.ratings);
       }
 
-      // Categories (comma-separated string → array)
       if (params.categories) {
          filters.categories = params.categories.split(",").map((c) => c.trim());
       }

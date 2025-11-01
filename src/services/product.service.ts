@@ -25,6 +25,8 @@ import { GLOBAL_TTL_CACHE } from "../config/constants.js";
 import { validatePaginationParams } from "../utils/validators.js";
 import { ProductCategoryRepository } from "../database/repositories/product-category.repository.js";
 import { logger } from "../lib/logger.js";
+import { Forbidden } from "../common/errors/ForbiddenError.js";
+import { InternalServerError } from "../common/errors/InternalServerError.js";
 
 export class ProductService {
    constructor(private productRepo: ProductsRepository) {}
@@ -50,7 +52,6 @@ export class ProductService {
 
       const fetcher = async () => this.productRepo.getAll(values, filters);
 
-      // 🟢 Handle cache (with structured logs)
       const { allProducts, total } = await cache.remember(
          cacheKey,
          GLOBAL_TTL_CACHE,
@@ -102,63 +103,77 @@ export class ProductService {
       const { name, slug, price, stock, description, imageUrl } = dto;
       const badRequestErrors: Record<string, string> = {};
 
-      if (!productId || typeof productId !== "string" || !productId.trim()) {
-         throw new BadRequest("Product ID is required.");
-      }
-      if (name !== undefined && name.trim().length === 0) {
+      // Basic validation
+      if (!productId?.trim()) throw new BadRequest("Product ID is required.");
+      if (name !== undefined && !name.trim())
          badRequestErrors.name = "Name cannot be empty.";
-      }
-      if (price !== undefined && Number(price) <= 0) {
+      if (price !== undefined && Number(price) <= 0)
          badRequestErrors.price = "Price must be greater than zero.";
-      }
-
-      if (Object.keys(badRequestErrors).length > 0) {
+      if (Object.keys(badRequestErrors).length > 0)
          throw new BadRequest(
             "Validation failed for one or more fields.",
             badRequestErrors
          );
-      }
 
+      // Retrieve existing product
       const existingProduct = await this.productRepo.getById(productId);
-      if (!existingProduct) {
-         throw new NotFound("Product not found");
-      }
+      if (!existingProduct) throw new NotFound("Product not found");
 
-      const nameToSlugify = name !== undefined ? name : existingProduct.name;
+      // Ownership check (optional)
+      if (existingProduct.createdBy !== userId)
+         throw new Forbidden("You are not authorized to update this product.");
 
-      const finalSlug =
-         slug && slug.trim() !== "" ? slugify(slug) : slugify(nameToSlugify);
+      // Slug handling
+      const nameToSlugify = name ?? existingProduct.name;
+      const finalSlug = slugify(slug?.trim() || nameToSlugify);
 
+      // Slug conflict check
       const existingProductBySlug = await this.productRepo.getBySlug(finalSlug);
-
-      if (existingProductBySlug && existingProductBySlug.id !== productId) {
+      if (existingProductBySlug && existingProductBySlug.id !== productId)
          throw new ConflictError(
             `Product slug '${finalSlug}' already exists.`,
-            { slug: `The product slug '${finalSlug}' is already in use.` }
+            {
+               slug: `The product slug '${finalSlug}' is already in use.`,
+            }
          );
-      }
+
+      // Prepare update payload
       const updatePayload: Partial<UpdateProductModel> = {
          slug: finalSlug,
          updatedBy: userId,
       };
-
       if (name !== undefined) updatePayload.name = name;
-      if (price !== undefined) {
-         const parsedPrice = Number(price);
-         updatePayload.price = Math.round(parsedPrice * 100) / 100;
-      }
+      if (price !== undefined) updatePayload.price = Number(price);
       if (stock !== undefined) updatePayload.stock = Number(stock);
       if (description !== undefined) updatePayload.description = description;
       if (imageUrl !== undefined) updatePayload.imageUrl = imageUrl;
 
+      // Log before performing update
+      logger.info({
+         msg: "[ProductService] Updating product...",
+         productId,
+         updatePayload,
+      });
+
+      // Perform DB update
       const updatedProduct = await this.productRepo.update(
          productId,
          updatePayload as UpdateProductModel
       );
+      if (!updatedProduct)
+         throw new InternalServerError("Failed to update product record.");
 
-      if (!updatedProduct) {
-         throw new BadRequest("Failed to retrieve updated product data.");
-      }
+      // Cache invalidation
+      await Promise.all([
+         cache.delByPrefix("products"),
+         cache.delByPrefix(`products:${productId}`),
+      ]);
+
+      logger.info({
+         msg: "[ProductService] Cache invalidated after product update.",
+         cachePrefix: "products",
+         productId,
+      });
 
       const response: ProductResponseDTO = {
          ...updatedProduct,
@@ -345,7 +360,14 @@ export class ProductCategoryService {
 
       const product = await this.productCategoryRepo.add(productData);
 
-      // 🧹 Invalidate product cache
+      if (!product) {
+         logger.error({
+            msg: "[ProductService] Failed to create product.",
+            productData,
+         });
+         throw new BadRequest("Failed to create product.");
+      }
+
       await cache.delByPrefix("products");
 
       logger.info({
