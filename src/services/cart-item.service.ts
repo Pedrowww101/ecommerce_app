@@ -1,5 +1,6 @@
 import { cache } from "../utils/cache.js";
 import { BadRequest } from "../common/errors/BadRequestError.js";
+import { NotFound } from "../common/errors/NotFoundError.js";
 import { ApiResponse } from "../common/responses/ApiResponse.js";
 import {
    PaginationParams,
@@ -74,6 +75,28 @@ export class CartItemService {
          success: true,
          data: responseData,
          message: "Added to cart successfully",
+      };
+   }
+
+   async removeFromCart(
+      userId: string,
+      productId: string
+   ): Promise<ApiResponse<boolean>> {
+      const cart = await this.cartRepo.getByUserId(userId);
+      if (!cart) throw new BadRequest("User does not have an active cart.");
+
+      const wasDeleted = await this.cartItemRepo.removeFromCart(
+         cart.id,
+         productId
+      );
+      if (!wasDeleted) {
+         throw new NotFound("Product not found in cart.");
+      }
+
+      await cache.delByPrefix(`cartItems:cart:${cart.id}`);
+      return {
+         success: true,
+         message: "Removed from cart successfully",
       };
    }
 

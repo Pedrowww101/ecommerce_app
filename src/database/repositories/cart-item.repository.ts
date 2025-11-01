@@ -105,7 +105,7 @@ export class CartItemsRepository {
       };
    }
 
-   async removeItem(cartId: string, productId: string) {
+   async removeFromCart(cartId: string, productId: string) {
       const [deletedItem] = await this.dbClient
          .delete(cartItems)
          .where(
@@ -114,8 +114,8 @@ export class CartItemsRepository {
                eq(cartItems.productId, productId)
             )
          )
-         .returning(); // Use returning() to confirm the item was deleted
+         .returning();
 
-      return deletedItem; // Returns SelectCartItemsModel or undefined
+      return !!deletedItem;
    }
 }
